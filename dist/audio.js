@@ -1,10 +1,11 @@
 // Hearthvale at Sundown: original procedural score. No samples or borrowed melodies.
 export class AdventureAudio {
- constructor(){this.ctx=null;this.timer=null;this.on=false;this.step=0;this.next=0;this.mood='explore';this.volume=.18;}
+ constructor(){this.ctx=null;this.timer=null;this.on=false;this.step=0;this.next=0;this.mood='explore';this.volume=.18;this.ducked=false;}
  async start(){try{this.ctx ||= new (window.AudioContext||window.webkitAudioContext)();if(!this.master){this.master=this.ctx.createGain();this.master.gain.value=this.volume;this.master.connect(this.ctx.destination);}await this.ctx.resume();this.on=true;this.next=this.ctx.currentTime+.07;this.timer ||= setInterval(()=>this.schedule(),60);this.schedule();return true;}catch{return false}}
  stop(){this.on=false;clearInterval(this.timer);this.timer=null;if(this.ctx)this.ctx.suspend();}
  tone(midi,time,duration,type='triangle',volume=.15){if(!this.ctx||!this.on)return;const o=this.ctx.createOscillator(),g=this.ctx.createGain();o.type=type;o.frequency.value=440*2**((midi-69)/12);g.gain.setValueAtTime(0,time);g.gain.linearRampToValueAtTime(volume,time+.008);g.gain.exponentialRampToValueAtTime(.0001,time+duration);o.connect(g);g.connect(this.master);o.start(time);o.stop(time+duration+.025);}
  schedule(){if(!this.on)return;const dt=60/94/2;const melody=[76,0,79,81,83,81,79,76,74,76,79,0,74,71,74,0,72,0,76,79,81,79,76,72,74,76,74,71,69,71,74,0,76,79,83,86,83,81,79,76,74,0,78,81,83,81,78,74,72,76,79,83,81,79,76,72,74,71,69,71,76,0,0,0];const roots=[52,55,48,50,52,47,48,50];while(this.next<this.ctx.currentTime+.25){const i=this.step%64,t=this.next,root=roots[Math.floor(i/8)],tense=this.mood==='tense';if(melody[i])this.tone(melody[i]-(tense?12:0),t,dt*.88,'square',.07);if(i%2===0)this.tone(root-12,t,dt*1.7,'triangle',.36);this.tone(root+[12,19,24,19][i%4],t,dt*.68,'triangle',.13);if(i%4===2)this.tone(tense?42:40,t,.055,'triangle',.26);this.next+=dt;this.step++;}}
  effect(kind='step'){if(!this.on)return;const t=this.ctx.currentTime;const notes=kind==='reward'?[72,76,79,84]:kind==='finish'?[72,76,79,84,83,86,88]:[76,81];notes.forEach((n,i)=>this.tone(n,t+i*.09,.23,'triangle',.35));}
- duck(yes){if(this.master)this.master.gain.setTargetAtTime(yes?.045:this.volume,this.ctx.currentTime,.15)}
+ setVolume(value){this.volume=Math.max(0,Math.min(1,Number(value)||0))*.3;if(this.master)this.master.gain.setTargetAtTime(this.volume*(this.ducked?.25:1),this.ctx.currentTime,.08)}
+ duck(yes){this.ducked=yes;if(this.master)this.master.gain.setTargetAtTime(this.volume*(yes?.25:1),this.ctx.currentTime,.15)}
 }

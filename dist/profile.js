@@ -1,0 +1,19 @@
+export const heroes = [
+ {id:'scout',name:'The Scout',line:'Curious heart. Excellent questions.',color:'green',index:0},
+ {id:'builder',name:'The Builder',line:'Big ideas. A plan in your pocket.',color:'blue',index:1},
+ {id:'wayfinder',name:'The Wayfinder',line:'Your own pace. Your own path.',color:'orange',index:2}
+];
+export const profileOptions={
+ timeline:[['exploring','Just exploring'],['later','Six months or more'],['soon','Within six months']],
+ goal:[['stability','A place to settle in'],['space','More room for my life'],['control','A place I can make my own']],
+ question:[['budget','What could I comfortably spend?'],['process','How does buying actually work?'],['homes','How do I choose the right home?']],
+ charm:[['coin','A lucky coin'],['plant','A tiny houseplant'],['notebook','A notebook full of possibilities']]
+};
+export function defaultProfile(){return {name:'Adventurer',hero:'scout',timeline:'exploring',goal:'stability',question:'process',charm:'coin',complete:false};}
+export function cleanProfile(raw={}){const p=defaultProfile();p.name=String(raw.name||'Adventurer').trim().slice(0,30)||'Adventurer';p.hero=heroes.some(h=>h.id===raw.hero)?raw.hero:'scout';for(const [k,options] of Object.entries(profileOptions))p[k]=options.some(([v])=>v===raw[k])?raw[k]:p[k];p.complete=raw.complete===true;return p;}
+export function learningPlan(raw){const p=cleanProfile(raw);const focus={
+ budget:{title:'Find your comfortable numbers',why:'You wanted to understand what fits your life. Start with your full household budget.',tasks:[{id:'budget-spending',title:'Map one month of spending',detail:'Use your own records privately. Note essential costs, existing payments, and savings goals.'},{id:'budget-home',title:'List the costs a home would add',detail:'Include the total housing payment, utilities, upkeep, moving, and an emergency cushion.'},{id:'budget-questions',title:'Bring your budget questions to a lender',detail:'Ask about options and total costs. Your learning profile is not a loan assessment.'}]},
+ process:{title:'Build your buying roadmap',why:'You wanted a clearer picture of the process. Start by understanding each person’s role.',tasks:[{id:'process-team',title:'Write down who does what',detail:'Agent: property search and transaction. Lender: financing. Inspector: property condition.'},{id:'process-questions',title:'Prepare three questions for your first conversation',detail:'Ask about services, costs, and what you should prepare before taking the next step.'},{id:'process-map',title:'Talk through the journey from search to closing',detail:'Ask a professional to explain the sequence, decisions, and deadlines that apply to your situation.'}]},
+ homes:{title:'Define the home that fits your life',why:'You wanted help choosing a home. Begin with your needs before the beautiful kitchen.',tasks:[{id:'homes-needs',title:'Choose three needs and three nice-to-haves',detail:'Think about how you use your space, your routines, and what you can compromise on.'},{id:'homes-costs',title:'Compare the ongoing costs of two homes',detail:'Include relevant fees, utilities, maintenance, and other property-specific expenses.'},{id:'homes-inspection',title:'Prepare your condition questions',detail:'Ask about independent inspections, repair findings, and the contract options to discuss with your agent.'}]}
+ };const selected=focus[p.question];return {...selected,pace:p.timeline==='soon'?'Your pace: begin the conversation when you are ready.':p.timeline==='later'?'Your pace: make preparation part of the months ahead.':'Your pace: explore without a deadline.',goal:profileOptions.goal.find(([v])=>v===p.goal)[1]};}
+export function nextLocation(state,locations,unlocked){const available=locations.filter(l=>!state.done.includes(l.id)&&unlocked(state,l));if(state.profile?.question==='process'&&available.some(l=>l.id==='guild'))return available.find(l=>l.id==='guild');return available[0]||null;}

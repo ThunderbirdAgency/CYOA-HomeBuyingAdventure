@@ -1,1 +1,10 @@
-{"name":"choicewright-first-key","version":"1.0.0","private":true,"type":"module","scripts":{"check":"node --check dist/app.js && node --check dist/story-data.js && node --check dist/audio.js","test":"node tests/story.test.mjs"}}
+{
+  "name": "choicewright-first-key",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check dist/app.js && node --check dist/story-data.js && node --check dist/audio.js && node --check dist/profile.js",
+    "test": "node tests/story.test.mjs"
+  }
+}

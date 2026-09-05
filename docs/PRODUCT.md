@@ -1,23 +1,17 @@
 # The First Key — technical notes
 
-The application is a static browser game. Serve the dist directory over HTTP or HTTPS.
+Version 1.1 adds three selectable adventurers, a nickname and keepsake, an editable learning profile, a captioned animated prologue, explicit win conditions, one-click next-destination guidance, separate music and voice volume controls, and an interactive buying-plan checklist.
 
-## Engine
+The mapmaker’s tower replaces the former credit archive. The opening quest focuses on homebuying. The Credit Compass remains a separately labeled future series.
 
-story-data.js defines an episode as named nodes containing a speaker, prose, choices, optional widgets, a source ID, completion flags, and rewards. Locations define coordinates and prerequisite completions. New episodes can reuse the renderer, audio system, and journal pattern with separate story data and a distinct local-storage key.
+## Architecture
 
-app.js renders the map and dialogue, resolves story variables, snapshots choices for rewind, and generates a downloadable journal. Progress stays in browser storage. No real financial information is requested or transmitted.
+The static game is served from dist/. story-data.js holds authored dialogue, choices, rewards, source references, quest gates, and save migration. profile.js validates profile choices and maps the learning focus to a three-step plan. app.js renders the game and setup flows. audio.js composes original retro music using Web Audio. Original character and map artwork lives in dist/assets/.
 
-## Audio and artwork
+Progress and profile information stay in the browser. The profile determines educational direction, not financial eligibility. No financial records are requested, and no CRM, application, or live AI endpoint is connected.
 
-The original score uses browser oscillators for melody, arpeggios, bass, and cues. A user gesture starts audio. Read-aloud is optional browser speech synthesis. The map is original generated artwork.
+Previous-version saves retain relevant non-credit progress. The replacement mapmaker task must be completed before the revised ending is earned. The plan is a self-guided checklist rather than a second playable episode.
 
-## Current boundaries
+## Checks
 
-The First Key is playable. The Credit Compass is labeled as a series in development. No live AI endpoint, CRM, lead submission, or server-side account is implemented. Public educational copy links to the CFPB and FTC; all dollar examples and scenario outcomes are fictional.
-
-## Verification
-
-JavaScript syntax and static asset references were checked. The data-level test covers 24 complete journey variants, prerequisite gates, reserve persistence, valid source references, and repeat-safe rewards. Browser rendering, device audio, and observed play duration remain untested.
-
-Business-planning notes are maintained separately from this public technical documentation.
+All JavaScript modules pass syntax checks. Tests cover 24 complete story variants, valid story links and sources, quest gates, reserve persistence, profile-specific plans, previous-save migration, and repeat-safe rewards. Static asset references were checked. Browser rendering, actual sound playback, and play duration were not tested in this session.
