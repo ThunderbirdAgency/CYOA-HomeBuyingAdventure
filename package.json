@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check dist/app.js && node --check dist/story-data.js && node --check dist/audio.js && node --check dist/profile.js",
+    "check": "for f in dist/*.js dist/arcade/*.js scripts/*.mjs; do node --check \"$f\" || exit 1; done",
     "test": "node tests/story.test.mjs"
   }
 }

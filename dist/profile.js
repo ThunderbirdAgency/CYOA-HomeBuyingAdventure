@@ -37,7 +37,9 @@ export function defaultProfile() {
     hero: 'scout',
     timeline: 'exploring',
     goal: 'stability',
-    question: 'process',
+    // 'budget' by default: the focus question is now asked in-game at the mapmaker's tower, so until
+    // the player answers it the first stop should be Mira and the money, not the guild.
+    question: 'budget',
     charm: 'coin',
     complete: false,
   }

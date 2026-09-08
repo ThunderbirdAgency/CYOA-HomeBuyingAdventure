@@ -84,9 +84,9 @@
             <button class="zoom-toggle" id="zoom-toggle" aria-pressed="true" title="Follow camera">⌖</button>
           </div>
           <div class="map-toolbar">
-            <span>⌖ <b>Explore at your own pace</b></span>
-            <span class="desktop-help"><kbd>W A S D</kbd> walk <kbd>E</kbd> enter · click anywhere to walk there</span>
-            <span class="mobile-help">Tap the map to walk · tap a place to enter</span>
+            <span>⌖ <b>Walk it. There are coins on the paths.</b></span>
+            <span class="desktop-help"><kbd>W A S D</kbd> walk · <b>hold the mouse to lead</b> · <kbd>E</kbd> to enter</span>
+            <span class="mobile-help">Drag to lead your character · tap a place to enter</span>
           </div>
           <div class="dpad" id="dpad" aria-label="Touch controls">
             <button data-dir="up" aria-label="Walk up">▲</button>
@@ -144,9 +144,9 @@
         <span class="eyebrow">THE LEGEND OF HOMEOWNERSHIP</span>
         <div class="welcome-key">⚿</div>
         <h2>The First Key</h2>
-        <p>Rent day. Again.<br />What if your next chapter had a door of its own?</p>
-        <div class="welcome-meta"><span>✦ Pick your adventurer</span><span>◉ Put your face in the game</span><span>▶ Four arcade games</span><span>◷ A 10-minute first quest</span></div>
-        <button class="primary" id="begin">Create your adventurer <span>→</span></button>
+        <p>Your landlord is at the door with a doorknob levy.<br />What if your next chapter had a door of its own?</p>
+        <div class="welcome-meta"><span>▶ Playing in 10 seconds</span><span>◉ Put your face in the game</span><span>✦ Five arcade games</span><span>◷ A 10-minute quest</span></div>
+        <button class="primary" id="begin">Play <span>→</span></button>
         <button class="quiet" id="quiet">Play without sound</button>
         <p class="fine">A fictional adventure with real-world lessons, presented by Erik Miller, Patriot Home Mortgage. No financial information needed to play.</p>
       </div>
@@ -165,8 +165,10 @@
       <div class="story-top"><span class="eyebrow">SOUND &amp; VOICE</span><button id="close-sound" aria-label="Close volume controls">✕</button></div>
       <div class="sound-body">
         <label for="music-volume">Music <output id="music-level">60%</output></label><input id="music-volume" type="range" min="0" max="100" value="60" /><button class="secondary" id="sound-mute">Turn music on</button>
-        <label for="voice-volume">Read-aloud voice <output id="voice-level">80%</output></label><input id="voice-volume" type="range" min="0" max="100" value="80" />
-        <p class="small">Voice plays when you select Read aloud. Settings stay on this device.</p>
+        <label for="voice-volume">Read-aloud volume <output id="voice-level">80%</output></label><input id="voice-volume" type="range" min="0" max="100" value="80" />
+        <label for="voice-pick">Narrator voice</label>
+        <div class="voice-row"><select id="voice-pick"><option>Loading voices…</option></select><button class="secondary" id="voice-try">▶ Hear it</button></div>
+        <p class="small" id="voice-note">Voices come from your device, so the list differs between phones and computers. Settings stay on this device.</p>
       </div>
     </dialog>
     <dialog id="utility" class="utility">

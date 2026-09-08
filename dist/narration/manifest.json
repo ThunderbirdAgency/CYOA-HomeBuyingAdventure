@@ -1,0 +1,7 @@
+{
+  "note": "Placeholder. `node scripts/generate-narration.mjs --generate --voice <id>` overwrites this file with real clips. An empty clips object means voice.js uses the browser voice.",
+  "voice": "",
+  "model": "",
+  "generated": "",
+  "clips": {}
+}

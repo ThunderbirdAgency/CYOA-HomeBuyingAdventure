@@ -6,23 +6,26 @@ Live at **erikmillerhlt.com/play** (source of truth is this repo; see *Deploying
 
 ## The experience
 
-1. Choose one of three adventurers, or upload a photo and become a pixel portrait (processed on-device, never uploaded).
-2. Set your homeownership goal, timing, and biggest question.
-3. Watch the short animated prologue, or skip it.
-4. Walk Hearthvale with WASD, arrows, the on-screen d-pad, or tap-to-walk. Pick up coins on the paths.
-5. Collect the Budget Compass, Clear-Sight Lens, and Homeward Map. Each guide offers a bonus arcade game.
+1. Rent day. Bartleby Quill wants his money, plus a doorknob levy. Play **Rent Day** and keep what you can.
+2. Name your character and pick a look, or put your own face in the game (processed on-device, never uploaded). One screen, then you are playing.
+3. Rowan asks what you want behind your door and when you might move. Those answers shape your buying plan; there is no setup form.
+4. Walk Hearthvale with WASD or the arrows, or hold the mouse down and lead your character around. Coins sit on the paths.
+5. Collect the Budget Compass, Clear-Sight Lens, and Homeward Map. Each guide has a game.
 6. Explore a home and work through a repair discovery.
 7. Meet Erik, the lender at the gate, under the Patriot Home Mortgage flag. Your coins become fictional down payment and you see what that does to a monthly payment. Ask about Arizona programs.
 8. Say hello to Albert, the paperwork wizard, in the castle keep. The Augusta wind blew your paperwork across Hearthvale; Albert knows what a lender needs and where each page landed. Recover all five for the Ready Satchel.
 9. Reach the lantern bridge to earn the First Key and unlock Your Buying Plan, which you can send to Erik.
 10. Off the marked paths, a ring of humming stones opens a preview of the Credit Compass side series.
 
+The animated opening is optional and lives under How to play, so nothing stands between opening the page and playing.
+
 ## Hearthvale Arcade
 
-Four original pixel games live in `dist/arcade/`. Each runs inside the story at the matching location and on its own shareable page with Open Graph images.
+Five original pixel games live in `dist/arcade/`. Each runs inside the story at the matching location and on its own shareable page with Open Graph images.
 
 | Game | Where | Lesson |
 | --- | --- | --- |
+| Rent Day | Your cottage | Rent buys a month and never comes back. |
 | Coin Catch | Mira’s shop | Keep emergency money separate from the down payment. |
 | Offer Match | The guild hall | Compare the whole offer, not the advertised payment. |
 | Inspection Hunt | Three-Door Lane | An inspection is not an appraisal. |
@@ -35,6 +38,10 @@ Coins: path coins are worth 3, each game awards up to 40 (only improvements over
 Everything is opt-in and the game never withholds progress if a player declines or delivery fails. Forms post to the erikmillerhlt.com lead API (`/api/lead/`), which verifies each request with Cloudflare Turnstile, checks the page origin, requires an Arizona ZIP code (Erik is licensed in Arizona only), queues the lead durably, and forwards it to GoHighLevel with the funnel tags `game-plan`, `game-question`, `game-portal`, and `game-episode` plus a `game-lead` tag. Each lead carries a one-line `game_context` summary of the player's fictional choices. When the API is not reachable from the page (any host other than erikmillerhlt.com, or verification not configured), the form is replaced by prefilled text and email links so the player still has a way to reach Erik.
 
 `analytics.js` emits events (`game_start`, `location_enter`, `choice`, `coin_pickup`, `minigame_start`, `minigame_end`, `lead_open`, `lead_submit`, `contact_click`, `game_complete`, `plan_open`, `portal_found`, `portal_open`, `share`, and more) to whatever exists on the host page: `dataLayer`, `gtag`, Vercel `va`, or a first-party beacon endpoint. Add `?debug=1` to log events in the console.
+
+## Narration voices
+
+Read-aloud picks the best voice installed on the player's device and ranks robotic ones (Microsoft David, Zira, Mark) last, so it no longer defaults to the flat Windows voice. Players can change it in Sound & voice. For a premium narrator, `scripts/generate-narration.mjs` pre-renders every scene with ElevenLabs into `dist/narration/`, and the game plays those clips when present. Run it with `--dry-run` first to see the character count and cost. See [`docs/VOICE.md`](docs/VOICE.md).
 
 ## Configuration
 

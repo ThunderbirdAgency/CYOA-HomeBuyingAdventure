@@ -12,6 +12,7 @@ import {
   initialState,
   unlocked,
   choose,
+  applyChoice,
   enter,
   restoreState,
   collectMapCoin,
@@ -24,11 +25,14 @@ import { config, presenter, partner, assistant, coinsToDollars, coinsToMonthlySa
 import { track, trackOnce } from './analytics.js'
 import { requestLead, contactLinks } from './lead.js'
 import { pixelate, shareCard } from './avatar.js'
+import { narrator } from './voice.js'
+import { spriteSheet, portrait as characterPortrait, faceFromPhoto, CHARACTER_VERSION } from './character.js'
 
 const $ = (s) => document.querySelector(s),
   music = new AdventureAudio(),
   KEY = 'choicewright:first-key:v1'
 const GAMES = {
+  'rent-day': { title: 'Rent Day', where: 'Your cottage', blurb: 'Catch the coins before Bartleby Quill does.', icon: '⛃' },
   'coin-catch': { title: 'Coin Catch', where: 'Mira’s shop', blurb: 'Catch coins for the emergency pouch. Dodge the impulse buys.', icon: '◉' },
   'offer-match': { title: 'Offer Match', where: 'The guild hall', blurb: 'Two loan scrolls. One is hiding something. Pick the better deal.', icon: '◈' },
   'inspection-hunt': { title: 'Inspection Hunt', where: 'Three-Door Lane', blurb: 'Seven things are wrong with this house. Find them in time.', icon: '⌂' },
@@ -42,7 +46,10 @@ let state = initialState(),
   toastTimer,
   erikPixel = presenter.headshot,
   albertPixel = assistant.headshot,
-  activeArcade = null
+  activeArcade = null,
+  heroSheet = null, // walk sprite sheet data URL for the map token
+  heroPortrait = null, // matching head-and-shoulders for dialogue
+  heroSheetKey = ''
 try {
   const raw = JSON.parse(localStorage.getItem(KEY))
   state = restoreState(raw)
@@ -81,9 +88,34 @@ function heroOf(p = state.profile) {
   return heroes.find((h) => h.id === p.hero) || heroes[0]
 }
 function portraitHtml(cls = 'hero-art') {
+  if (heroPortrait) return `<span class="${cls} avatar" style="background-image:url(${heroPortrait})"></span>`
   return state.avatar
     ? `<span class="${cls} avatar" style="background-image:url(${state.avatar})"></span>`
     : `<span class="${cls}" style="background-position:${heroOf().index * 50}% center"></span>`
+}
+/**
+ * Draw the player as an actual little pixel person: a walk sprite sheet for the map and a
+ * matching portrait for dialogue. When the player supplied a photo, their face is composited
+ * into the character's head, so the photo changes who is walking around rather than sitting
+ * in a frame beside the map.
+ */
+async function buildHeroArt() {
+  const key = `${CHARACTER_VERSION}|${state.profile.hero}|${state.avatar ? state.avatar.length : 0}`
+  if (key === heroSheetKey && heroSheet) return
+  heroSheetKey = key
+  try {
+    const opts = { hero: state.profile.hero, face: state.avatar || null }
+    const [sheet, port] = await Promise.all([
+      spriteSheet({ ...opts, scale: 3, walkOnly: true }),
+      characterPortrait({ ...opts, scale: 2 }),
+    ])
+    heroSheet = sheet.dataUrl
+    heroPortrait = port.dataUrl
+  } catch {
+    heroSheet = null
+    heroPortrait = null
+  }
+  update()
 }
 function vars() {
   const v = state.vars,
@@ -159,7 +191,7 @@ function anyDialogOpen() {
   return [...document.querySelectorAll('dialog')].some((d) => d.open)
 }
 function stopNarration() {
-  window.speechSynthesis?.cancel()
+  narrator.stop()
   reading = false
   $('#narrate').setAttribute('aria-pressed', 'false')
   $('#narrate').textContent = '◖ Read aloud'
@@ -177,16 +209,16 @@ async function preparePresenter() {
   $('#footer-presenter').textContent = `${presenter.name} · ${presenter.company}`.toUpperCase()
   $('#footer-legal').textContent = presenter.legal
   try {
-    const cached = sessionStorage.getItem('choicewright:erik-pixel')
-    erikPixel = cached || (await pixelate(presenter.headshot, { size: 40, scale: 6, focus: 'top' }))
-    if (!cached) sessionStorage.setItem('choicewright:erik-pixel', erikPixel)
+    const cached = sessionStorage.getItem('choicewright:erik-pixel:v2')
+    erikPixel = cached || (await pixelate(presenter.headshot, { size: 72, scale: 4, focus: 'top', paletteMix: 0.35 }))
+    if (!cached) sessionStorage.setItem('choicewright:erik-pixel:v2', erikPixel)
   } catch {
     erikPixel = presenter.headshot
   }
   try {
-    const cached = sessionStorage.getItem('choicewright:albert-pixel')
-    albertPixel = cached || (await pixelate(assistant.headshot, { size: 40, scale: 6, focus: 'top' }))
-    if (!cached) sessionStorage.setItem('choicewright:albert-pixel', albertPixel)
+    const cached = sessionStorage.getItem('choicewright:albert-pixel:v2')
+    albertPixel = cached || (await pixelate(assistant.headshot, { size: 72, scale: 4, focus: 'top', paletteMix: 0.35 }))
+    if (!cached) sessionStorage.setItem('choicewright:albert-pixel:v2', albertPixel)
   } catch {
     albertPixel = assistant.headshot
   }
@@ -254,12 +286,17 @@ function update() {
   $('#next-destination').textContent = state.ended ? 'Open my buying plan →' : next ? 'Go to ' + next.name + ' →' : 'Show me the way →'
   $('#player-label').textContent = state.profile.complete ? state.profile.name.toUpperCase() + '’S QUEST' : 'YOUR ADVENTURE'
   const token = $('#hero-token')
-  if (state.avatar) {
+  if (heroSheet) {
+    token.classList.add('sheet')
+    token.classList.remove('avatar')
+    token.style.backgroundImage = `url(${heroSheet})`
+  } else if (state.avatar) {
     token.classList.add('avatar')
+    token.classList.remove('sheet')
     token.style.backgroundImage = `url(${state.avatar})`
     token.style.backgroundPosition = 'center'
   } else {
-    token.classList.remove('avatar')
+    token.classList.remove('avatar', 'sheet')
     token.style.backgroundImage = ''
     token.style.backgroundPosition = heroOf().index * 50 + '% center'
   }
@@ -331,7 +368,16 @@ function update() {
 }
 
 /* ---------- movement engine ---------- */
-const SPEED = 30 // percent of map per second
+// Percent of map width per second. Deliberately walkable: crossing Hearthvale should take
+// about ten seconds, not three, so the world feels like a place rather than a menu.
+const SPEED = 16
+const ACCEL = 7 // how fast the walker reaches full speed (higher = snappier)
+// The map is 1.5:1, so one percent of width covers more pixels than one percent of height.
+// Steering is done in pixel space and converted back, otherwise diagonal walks curve and
+// the walker can orbit its destination instead of arriving.
+const ASPECT = 1.5
+const toPixel = (dx, dy) => [dx * ASPECT, dy]
+const pixelDist = (dx, dy) => Math.hypot(dx * ASPECT, dy)
 const held = new Set()
 let target = null,
   onArrive = null,
@@ -341,7 +387,12 @@ let target = null,
   dustTimer = 0,
   saveTimer = 0,
   nearId = null,
-  followCamera = true
+  followCamera = true,
+  vx = 0,
+  vy = 0,
+  steering = null, // {x, y} map percent the pointer is holding the walker toward
+  frameClock = 0,
+  walkFrame = 0
 try {
   followCamera = localStorage.getItem(KEY + ':follow') !== 'off'
 } catch {}
@@ -378,14 +429,18 @@ function stopLoop() {
   moving = false
   cancelAnimationFrame(rafId)
   traveler.classList.remove('walking')
+  traveler.dataset.frame = '0'
+  vx = vy = 0
   save()
 }
 function step(ts) {
   if (!moving) return
   const dt = Math.min(0.05, (ts - lastTs) / 1000)
   lastTs = ts
+  // Desired direction, from (in priority order) the keys, the held pointer, or a walk-to target.
   let dx = 0,
-    dy = 0
+    dy = 0,
+    arriving = false
   if (held.size) {
     if (held.has('left')) dx -= 1
     if (held.has('right')) dx += 1
@@ -393,35 +448,61 @@ function step(ts) {
     if (held.has('down')) dy += 1
     target = null
     onArrive = null
+    steering = null
+  } else if (steering) {
+    dx = steering.x - state.player.x
+    dy = steering.y - state.player.y
+    if (pixelDist(dx, dy) < 1.6) dx = dy = 0 // stand still under the cursor
+    target = null
+    onArrive = null
   } else if (target) {
     dx = target.x - state.player.x
     dy = target.y - state.player.y
-    const d = Math.hypot(dx, dy)
+    const d = pixelDist(dx, dy)
     // Arrive when within a step, or when already standing there (first frame has dt ≈ 0).
-    if (d < Math.max(0.6, SPEED * dt)) {
+    if (d < Math.max(0.9, SPEED * dt)) {
       state.player.x = target.x
       state.player.y = target.y
       const cb = onArrive
       target = null
       onArrive = null
+      vx = vy = 0
       position()
       checkCoins()
       stopLoop()
       cb?.()
       return
     }
+    arriving = d < 6 // ease into the destination instead of stopping dead
   }
-  const len = Math.hypot(dx, dy)
-  if (!len) return stopLoop()
-  dx /= len
-  dy /= len
-  // The map is 1.5:1, so vertical percent moves fewer pixels; scale y a little to feel even.
-  state.player.x = Math.max(3, Math.min(97, state.player.x + dx * SPEED * dt))
-  state.player.y = Math.max(5, Math.min(93, state.player.y + dy * SPEED * dt * 1.35))
-  if (dx) state.player.facing = dx < 0 ? -1 : 1
+  // Normalise in pixel space so the walker travels a straight line at an even speed,
+  // then convert the velocity back into map percent for each axis.
+  const [px, py] = toPixel(dx, dy)
+  const len = Math.hypot(px, py)
+  const speed = SPEED * (arriving ? 0.6 : 1)
+  const tx = len ? (px / len) * speed : 0,
+    ty = len ? (py / len) * speed : 0
+  const k = Math.min(1, ACCEL * dt)
+  vx += (tx - vx) * k
+  vy += (ty - vy) * k
+  if (!len && Math.hypot(vx, vy) < 0.4) {
+    vx = vy = 0
+    return stopLoop()
+  }
+  state.player.x = Math.max(3, Math.min(97, state.player.x + (vx / ASPECT) * dt))
+  state.player.y = Math.max(5, Math.min(93, state.player.y + vy * dt))
+  if (Math.abs(vx) > 0.6) state.player.facing = vx < 0 ? -1 : 1
+  // Walk animation runs off distance travelled, so the legs match the speed.
+  const moved = Math.hypot(vx, vy) * dt
+  frameClock += moved
+  if (frameClock > 1.5) {
+    frameClock = 0
+    walkFrame = (walkFrame + 1) % 4
+    traveler.dataset.frame = walkFrame
+  }
   position()
   dustTimer += dt
-  if (dustTimer > 0.22) {
+  if (dustTimer > 0.42) {
     dustTimer = 0
     puff()
     music.effect('step-soft')
@@ -598,7 +679,11 @@ document.addEventListener('keyup', (e) => {
   const k = dirKeys[e.key.toLowerCase()]
   if (k) held.delete(k)
 })
-window.addEventListener('blur', () => held.clear())
+window.addEventListener('blur', () => {
+  held.clear()
+  steering = null
+  pointerHeld = false
+})
 // Touch d-pad.
 document.querySelectorAll('#dpad [data-dir]').forEach((b) => {
   const k = b.dataset.dir
@@ -621,16 +706,53 @@ document.querySelectorAll('#dpad [data-dir]').forEach((b) => {
 })
 $('#dpad [data-act]').onclick = enterNearby
 // Tap or click the map to walk there.
-world.addEventListener('click', (e) => {
-  if (!state.started) return
-  if (e.target.closest('button')) return
+// Pointer control: a click walks there; holding the button down leads the character
+// around like a leash, so the player is steering rather than issuing orders.
+function mapPoint(e) {
   const r = layer.getBoundingClientRect()
-  const x = ((e.clientX - r.left) / r.width) * 100,
-    y = ((e.clientY - r.top) / r.height) * 100
-  if (x < 0 || x > 100 || y < 0 || y > 100) return
-  walkTo(x, y)
+  const p = e.touches ? e.touches[0] : e
+  const x = ((p.clientX - r.left) / r.width) * 100,
+    y = ((p.clientY - r.top) / r.height) * 100
+  return x < -5 || x > 105 || y < -5 || y > 105 ? null : { x: Math.max(3, Math.min(97, x)), y: Math.max(5, Math.min(93, y)) }
+}
+let pointerHeld = false,
+  pointerMoved = false,
+  pointerStart = null
+function pointerDown(e) {
+  if (!state.started || e.target.closest('button')) return
+  const p = mapPoint(e)
+  if (!p) return
+  pointerHeld = true
+  pointerMoved = false
+  pointerStart = p
   world.focus({ preventScroll: true })
-})
+}
+function pointerMove(e) {
+  if (!pointerHeld) return
+  const p = mapPoint(e)
+  if (!p) return
+  // Only start leading once the pointer has actually travelled, so a plain click still means "walk there".
+  if (!pointerMoved && Math.hypot(p.x - pointerStart.x, p.y - pointerStart.y) < 2) return
+  pointerMoved = true
+  if (e.cancelable) e.preventDefault()
+  steering = p
+  startLoop()
+}
+function pointerUp(e) {
+  if (!pointerHeld) return
+  pointerHeld = false
+  const p = mapPoint(e) || steering || pointerStart
+  steering = null
+  if (!pointerMoved && p) walkTo(p.x, p.y)
+  pointerStart = null
+}
+world.addEventListener('mousedown', pointerDown)
+window.addEventListener('mousemove', pointerMove)
+window.addEventListener('mouseup', pointerUp)
+world.addEventListener('touchstart', pointerDown, { passive: true })
+world.addEventListener('touchmove', pointerMove, { passive: false })
+window.addEventListener('touchend', pointerUp)
+window.addEventListener('touchcancel', pointerUp)
 $('#zoom-toggle').onclick = () => {
   followCamera = !followCamera
   try {
@@ -668,7 +790,10 @@ function speakerPortrait(node) {
   const s = node.speaker || ''
   if (s.startsWith('{{presenterName}}')) return `<img class="portrait" src="${erikPixel}" alt="">`
   if (s.startsWith('{{assistantName}}')) return `<img class="portrait albert" src="${albertPixel}" alt="">`
-  if (s.startsWith('{{name}}')) return portraitHtml('portrait hero-portrait')
+  if (s.startsWith('{{name}}'))
+    return heroPortrait
+      ? `<img class="portrait" src="${heroPortrait}" alt="">`
+      : portraitHtml('portrait hero-portrait')
   return `<span class="sigil">${node.symbol}</span>`
 }
 function renderNode(id) {
@@ -694,7 +819,7 @@ function renderNode(id) {
   $('#story-body').innerHTML =
     `<div class="scene-enter">${node.ending ? '<div class="ending-seal">⚿</div>' : ''}<div class="character">${speakerPortrait(node)}${interpolate(node.speaker)}</div><h2>${interpolate(node.title)}</h2><div class="prose">${node.text.map((p) => `<p>${interpolate(p)}</p>`).join('')}</div>${node.widget ? widget(node.widget) : ''}${node.lesson ? `<div class="lesson"><small>PACK THIS FOR REAL LIFE</small>${node.lesson}</div>` : ''}${node.ending ? `<div class="complete-metrics"><span>${locations.length} places explored</span><span>${state.inventory.length} discoveries earned</span><span>◉ ${state.coins} coins</span></div>` : ''}${
       game
-        ? `<button class="minigame-launch" data-game="${node.minigame}"><span class="mg-icon">${game.icon}</span><span><strong>Bonus game: ${game.title}</strong><small>${game.blurb}${best ? ` · Best ◉ ${best.coins}` : ' · Earn up to 40 coins'}</small></span><span>▶</span></button>`
+        ? `<button class="minigame-launch ${node.minigameLabel ? 'feature' : ''}" data-game="${node.minigame}"><span class="mg-icon">${game.icon}</span><span><strong>${node.minigameLabel || 'Bonus game: ' + game.title}</strong><small>${node.minigameBlurb || game.blurb}${best ? ` · Best ◉ ${best.coins}` : ' · Earn coins for your pouch'}</small></span><span>▶</span></button>`
         : ''
     }<div class="choices">${node.choices.map((c, i) => `<button class="choice" data-choice="${i}"><span>${i + 1}</span><div><strong>${interpolate(c.label)}</strong>${c.detail ? `<small>${interpolate(c.detail)}</small>` : ''}</div><span>→</span></button>`).join('')}</div></div>`
   $('#story-body').scrollTop = 0
@@ -720,6 +845,9 @@ async function act(i) {
   music.effect()
   track('choice', { node: state.node, choice: i })
   if (c.to.startsWith('@')) {
+    // Action choices carry answers too — the opening scene asks the player's timing on an
+    // @next choice — so record the data without moving the player off this scene.
+    applyChoice(state, c)
     if (c.to === '@portal-unlock') return unlockPortal()
     save()
     closeStory()
@@ -791,19 +919,21 @@ story.addEventListener('cancel', (e) => {
 })
 $('#narrate').onclick = () => {
   if (reading) return stopNarration()
-  if (!window.speechSynthesis) return toast('Read-aloud is not available in this browser. All dialogue is on screen.')
-  const node = episode.nodes[state.node],
-    u = new SpeechSynthesisUtterance([interpolate(node.title), ...node.text.map(interpolate), node.lesson || ''].join('. ').replace(/&[a-z#0-9]+;/g, ' '))
-  u.rate = 0.96
-  u.pitch = 0.93
-  u.lang = 'en-US'
-  u.volume = audioPrefs.voice / 100
-  u.onend = u.onerror = () => stopNarration()
+  if (!narrator.isSupported()) return toast('Read-aloud is not available in this browser. All dialogue is on screen.')
+  const node = episode.nodes[state.node]
+  const text = [interpolate(node.title), ...node.text.map(interpolate), node.lesson || '']
+    .join('. ')
+    .replace(/&[a-z#0-9]+;/g, ' ')
   reading = true
   $('#narrate').setAttribute('aria-pressed', 'true')
   $('#narrate').textContent = '■ Stop reading'
   music.duck(true)
-  speechSynthesis.speak(u)
+  const handle = narrator.speak(state.node, text, {
+    volume: audioPrefs.voice / 100,
+    onend: stopNarration,
+    onerror: stopNarration,
+  })
+  track('narrate', { node: state.node, mode: handle?.mode })
 }
 
 /* ---------- arcade (in-story and from the panel) ---------- */
@@ -856,7 +986,7 @@ function showArcade() {
   destroyArcade()
   utilityView(
     'HEARTHVALE ARCADE',
-    `<h2>Four quick games. Real lessons. Pretend coins.</h2><p>Every coin is $100 of fictional down payment at the gate. Play here any time, or share a game on its own page.</p><div class="arcade-list">${Object.entries(GAMES)
+    `<h2>Five quick games. Real lessons. Pretend coins.</h2><p>Every coin is $100 of fictional down payment at the gate. Play here any time, or share a game on its own page.</p><div class="arcade-list">${Object.entries(GAMES)
       .map(([id, g]) => {
         const b = state.minigames[id]
         return `<div class="arcade-row"><span class="mg-icon">${g.icon}</span><div><strong>${g.title}</strong><small>${g.blurb}</small><small class="muted">${b ? `Best score ${b.score} · ◉ ${b.coins} · ${b.plays} play${b.plays === 1 ? '' : 's'}` : 'Not played yet'}</small></div><div class="arcade-row-actions"><button class="primary" data-play="${id}">Play ▶</button><button class="secondary" data-share="${id}" title="Copy a link to this game">↗</button></div></div>`
@@ -905,7 +1035,12 @@ async function toggleMusic() {
   syncSound()
 }
 $('#music').onclick = toggleMusic
+let voicePickerReady = false
 function soundPanel() {
+  if (!voicePickerReady) {
+    voicePickerReady = true
+    buildVoicePicker()
+  }
   if ($('#prologue').open) {
     prologuePaused = true
     renderPrologue()
@@ -917,6 +1052,35 @@ $('#audio-settings').onclick = soundPanel
 $('#story-volume').onclick = soundPanel
 $('#close-sound').onclick = () => $('#sound-panel').close()
 $('#sound-mute').onclick = toggleMusic
+/* ---------- narrator voice picker ---------- */
+async function buildVoicePicker() {
+  const sel = $('#voice-pick'),
+    note = $('#voice-note')
+  if (!sel) return
+  const list = await narrator.ready()
+  if (!list.length) {
+    sel.innerHTML = '<option>No voices installed</option>'
+    sel.disabled = true
+    $('#voice-try').disabled = true
+    note.textContent = 'This browser has no speech voices installed, so read-aloud is unavailable. All dialogue is on screen.'
+    return
+  }
+  const current = narrator.currentVoice()
+  sel.innerHTML = list
+    .map((v) => `<option value="${esc(v.id)}" ${current && v.id === current.id ? 'selected' : ''}>${esc(v.label)}</option>`)
+    .join('')
+  sel.disabled = false
+  $('#voice-try').disabled = false
+  // The best voice on the device is first in the list, so say so rather than leaving the player guessing.
+  note.textContent = `${list.length} voice${list.length === 1 ? '' : 's'} on this device, best first. Settings stay on this device.`
+  sel.onchange = () => {
+    narrator.setVoice(sel.value)
+    track('voice_changed')
+    narrator.preview(sel.value, { volume: audioPrefs.voice / 100 })
+  }
+  $('#voice-try').onclick = () => narrator.preview(sel.value, { volume: audioPrefs.voice / 100 })
+}
+
 function saveAudio() {
   try {
     localStorage.setItem(KEY + ':audio', JSON.stringify(audioPrefs))
@@ -1286,6 +1450,8 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     stopNarration()
     held.clear()
+    steering = null
+    pointerHeld = false
     if ($('#prologue').open) {
       prologuePaused = true
       renderPrologue()
@@ -1310,7 +1476,7 @@ $('#next-destination').onclick = goNext
 function howToPlay() {
   utilityView(
     'YOUR FIRST QUEST',
-    `<h2>From rent day to your first key.</h2><p>Your long-term adventure is buying a home. This opening quest is a short practice run that unlocks your personal buying plan.</p><ol class="how-steps"><li><b>Collect three tools.</b> Visit the provisioner, the guild, and the mapmaker’s tower.</li><li><b>Face your first house decision.</b> Visit Three-Door Lane and work through a repair surprise.</li><li><b>Meet the lender at the gate.</b> ${esc(presenter.firstName)} and ${esc(assistant.firstName)} are the two real people in town. Reach the bridge to earn your First Key.</li></ol><div class="lesson"><small>HOW TO MOVE</small>Walk with <kbd>W A S D</kbd> or the arrows, or tap anywhere on the map. Press <kbd>E</kbd> or tap ● near a glowing place to enter it. Walk over coins to collect them. Something off the marked paths is humming.</div><div class="lesson"><small>COINS</small>Path coins and the four arcade games fill your pouch. At the gate, every coin becomes $100 of fictional down payment and you see what it does to a monthly payment.</div><p>There is no timer and no perfect score. Thoughtful choices, including deciding to prepare longer, move the story forward.</p><div class="utility-actions"><button class="primary" id="help-next">${state.ended ? 'Open my buying plan' : 'Take me to my next stop'} →</button><button class="secondary" id="replay-intro">Replay the opening</button></div>`,
+    `<h2>From rent day to your first key.</h2><p>Your long-term adventure is buying a home. This opening quest is a short practice run that unlocks your personal buying plan.</p><ol class="how-steps"><li><b>Survive rent day.</b> Bartleby Quill wants his money. Keep what you can.</li><li><b>Collect three tools.</b> Visit the provisioner, the guild, and the mapmaker’s tower.</li><li><b>Face your first house decision.</b> Visit Three-Door Lane and work through a repair surprise.</li><li><b>Meet the lender at the gate.</b> ${esc(presenter.firstName)} and ${esc(assistant.firstName)} are the two real people in town. Reach the bridge to earn your First Key.</li></ol><div class="lesson"><small>HOW TO MOVE</small>Walk with <kbd>W A S D</kbd> or the arrows. Click the map to walk there, or <b>hold the mouse down and lead your character around</b> like a leash. Press <kbd>E</kbd> or tap ● near a glowing place to enter it. Walk over coins to collect them. Something off the marked paths is humming.</div><div class="lesson"><small>COINS</small>Path coins and the four arcade games fill your pouch. At the gate, every coin becomes $100 of fictional down payment and you see what it does to a monthly payment.</div><p>There is no timer and no perfect score. Thoughtful choices, including deciding to prepare longer, move the story forward.</p><div class="utility-actions"><button class="primary" id="help-next">${state.ended ? 'Open my buying plan' : 'Take me to my next stop'} →</button><button class="secondary" id="replay-intro">Watch the animated opening</button></div>`,
   )
   $('#help-next').onclick = () => {
     utility.close()
@@ -1349,13 +1515,36 @@ function draftPortrait(cls) {
   const hero = heroes.find((h) => h.id === setupDraft.hero)
   return draftAvatar ? `<span class="${cls} avatar" style="background-image:url(${draftAvatar})"></span>` : `<span class="${cls}" style="background-position:${hero.index * 50}% center"></span>`
 }
+/** Draw the character currently being configured into the setup screen's preview slot. */
+let previewToken = 0
+async function previewCharacter() {
+  const img = $('#char-preview')
+  if (!img) return
+  const mine = ++previewToken
+  const loading = $('#char-loading')
+  if (loading) loading.hidden = false
+  try {
+    const sheet = await spriteSheet({ hero: setupDraft.hero, face: draftAvatar || null, scale: 6, walkOnly: true })
+    if (mine !== previewToken) return
+    // Show a single frame: the sheet is four frames wide, so scale it up and clip to the first.
+    img.src = sheet.dataUrl
+    img.style.width = sheet.frameWidth + 'px'
+    img.style.height = sheet.frameHeight + 'px'
+    img.style.objectFit = 'none'
+    img.style.objectPosition = '0 0'
+  } catch {
+    if (mine === previewToken) img.removeAttribute('src')
+  }
+  if (loading && mine === previewToken) loading.hidden = true
+}
+
 function renderSetup() {
   const hero = heroes.find((h) => h.id === setupDraft.hero)
-  $('#setup-body').innerHTML = `<div class="setup-top"><span class="eyebrow">${editingProfile ? 'MY ADVENTURER' : 'YOUR STORY STARTS HERE'} · ${setupStep + 1} OF 2</span>${editingProfile ? '<button id="cancel-profile" aria-label="Cancel changes">✕</button>' : ''}</div><div class="setup-content"><h2>${setupStep === 0 ? 'Every adventure needs you.' : 'What is on the other side of your door?'}</h2><p class="muted">${setupStep === 0 ? 'Pick a character that feels like you, or put your own face in the game. All three can take every path.' : 'A few choices to make the journey yours. You can change them later.'}</p>${
+  $('#setup-body').innerHTML = `<div class="setup-top"><span class="eyebrow">${editingProfile ? `MY ADVENTURER · ${setupStep + 1} OF 2` : 'WHO IS KNOCKING BACK?'}</span>${editingProfile ? '<button id="cancel-profile" aria-label="Cancel changes">✕</button>' : ''}</div><div class="setup-content"><h2>${setupStep === 0 ? 'Every adventure needs you.' : 'What is on the other side of your door?'}</h2><p class="muted">${setupStep === 0 ? 'Pick a character, or put your own face in the game. Takes ten seconds. The rest you answer while you play.' : 'These shape your buying plan. Change them whenever you like.'}</p>${
     setupStep === 0
-      ? `<div class="hero-grid" role="group" aria-label="Choose your adventurer">${heroes.map((h) => `<button type="button" class="hero-card ${setupDraft.hero === h.id ? 'selected' : ''}" data-hero="${h.id}" aria-pressed="${setupDraft.hero === h.id}"><span class="hero-art" style="background-position:${h.index * 50}% center"></span><strong>${h.name}</strong><small>${h.line}</small><span class="hero-selected">${setupDraft.hero === h.id ? '✓ Selected' : 'Choose'}</span></button>`).join('')}</div><div class="photo-row"><div class="photo-preview">${draftAvatar ? `<img src="${draftAvatar}" alt="Your pixel portrait" width="96" height="96">` : '<span class="photo-empty">◉</span>'}</div><div><strong>Put your face in the game</strong><p class="small">Choose a photo and it becomes a pixel portrait right here on your device. The photo is never uploaded; only the tiny portrait is kept.</p><div class="photo-actions"><label class="secondary file-btn">${draftAvatar ? 'Try another photo' : 'Choose a photo'}<input type="file" id="avatar-file" accept="image/*" capture="user" hidden></label>${draftAvatar ? '<button type="button" class="secondary" id="avatar-remove">Use the character instead</button>' : ''}</div><p class="small photo-status" id="photo-status" hidden></p></div></div><div class="profile-grid"><label>What should we call you?<input id="adventurer-name" type="text" maxlength="30" autocomplete="off" value="${esc(setupDraft.name === 'Adventurer' ? '' : setupDraft.name)}" placeholder="Name or nickname"></label><label>Bring a little luck<select id="adventurer-charm">${selectOptions('charm', setupDraft.charm)}</select></label></div>`
+      ? `<div class="hero-grid" role="group" aria-label="Choose your adventurer">${heroes.map((h) => `<button type="button" class="hero-card ${setupDraft.hero === h.id ? 'selected' : ''}" data-hero="${h.id}" aria-pressed="${setupDraft.hero === h.id}"><span class="hero-art" style="background-position:${h.index * 50}% center"></span><strong>${h.name}</strong><small>${h.line}</small><span class="hero-selected">${setupDraft.hero === h.id ? '✓ Selected' : 'Choose'}</span></button>`).join('')}</div><div class="photo-row"><div class="photo-preview char"><img id="char-preview" alt="Your character" width="108" height="144"><span class="photo-empty" id="char-loading" hidden>…</span></div><div><strong>${draftAvatar ? 'That’s you, in Hearthvale.' : 'Put your face in the game'}</strong><p class="small">${draftAvatar ? 'Your face is part of the character now — this is who walks the map and talks to Erik.' : 'Choose a photo and your face becomes part of the character, on the map and in every conversation. The photo never leaves your device.'}</p><div class="photo-actions"><label class="secondary file-btn">${draftAvatar ? 'Try another photo' : 'Choose a photo'}<input type="file" id="avatar-file" accept="image/*" capture="user" hidden></label>${draftAvatar ? '<button type="button" class="secondary" id="avatar-remove">Use the character instead</button>' : ''}</div><p class="small photo-status" id="photo-status" hidden></p></div></div><div class="profile-grid"><label>What should we call you?<input id="adventurer-name" type="text" maxlength="30" autocomplete="off" value="${esc(setupDraft.name === 'Adventurer' ? '' : setupDraft.name)}" placeholder="Name or nickname"></label><label>Bring a little luck<select id="adventurer-charm">${selectOptions('charm', setupDraft.charm)}</select></label></div>`
       : `<div class="profile-hero">${draftPortrait('hero-art')}<div><span class="eyebrow">${draftAvatar ? 'YOU, IN PIXELS · ' : ''}${hero.name}</span><h3>${esc(setupDraft.name || 'Adventurer')}</h3><p>${esc(profileOptions.charm.find(([v]) => v === setupDraft.charm)[1])} packed. Possibilities ahead.</p></div></div><div class="profile-fields"><label>What would a home make possible?<select id="profile-goal">${selectOptions('goal', setupDraft.goal)}</select></label><label>When might you want to make a move?<select id="profile-timeline">${selectOptions('timeline', setupDraft.timeline)}</select></label><label>What would you most like to understand?<select id="profile-question">${selectOptions('question', setupDraft.question)}</select></label></div>`
-  }<div class="setup-actions">${setupStep ? '<button class="secondary" id="setup-back">← My character</button>' : '<span class="small">Your character changes the look, not your options.</span>'}<button class="primary" id="setup-next">${setupStep === 0 ? 'Make it my story →' : editingProfile ? 'Save my changes' : 'Watch the opening →'}</button></div><p class="privacy-note">Your answers personalize learning and stay on this device unless you choose to send a message to ${esc(presenter.name)}. They are not a mortgage assessment.</p></div>`
+  }<div class="setup-actions">${setupStep ? '<button class="secondary" id="setup-back">← My character</button>' : '<span class="small">No sign-up. Nothing is sent anywhere.</span>'}<button class="primary" id="setup-next">${setupStep === 0 ? (editingProfile ? 'Next →' : 'Start playing →') : 'Save my changes'}</button></div><p class="privacy-note">Your answers personalize learning and stay on this device unless you choose to send a message to ${esc(presenter.name)}. They are not a mortgage assessment.</p></div>`
   document.querySelectorAll('[data-hero]').forEach(
     (b) =>
       (b.onclick = () => {
@@ -1363,8 +1552,10 @@ function renderSetup() {
         setupDraft.hero = b.dataset.hero
         music.effect()
         renderSetup()
+        previewCharacter()
       }),
   )
+  previewCharacter()
   const file = $('#avatar-file')
   if (file)
     file.onchange = async () => {
@@ -1376,7 +1567,8 @@ function renderSetup() {
       status.hidden = false
       status.textContent = 'Turning you into pixels…'
       try {
-        draftAvatar = await pixelate(f, { size: 32, scale: 8 })
+        const { dataUrl } = await faceFromPhoto(f)
+        draftAvatar = dataUrl
         music.effect('reward')
         track('avatar_created')
       } catch {
@@ -1403,13 +1595,16 @@ function renderSetup() {
   $('#setup-next').onclick = () => {
     collectSetup()
     setupDraft = cleanProfile(setupDraft)
-    if (setupStep === 0) {
+    // First run is a single screen: name and character, then straight into the story.
+    // Rowan and Ellis ask about goal, timing and focus in dialogue instead of on a form.
+    if (setupStep === 0 && editingProfile) {
       setupStep = 1
       renderSetup()
       return
     }
     state.profile = { ...setupDraft, complete: true }
     state.avatar = draftAvatar
+    buildHeroArt()
     state.vars.priority = state.profile.goal
     save()
     update()
@@ -1418,7 +1613,14 @@ function renderSetup() {
     if (editingProfile) {
       toast('Your adventurer and buying plan are updated.')
       if (state.planStarted && state.ended) showPlan()
-    } else showPrologue(false)
+      return
+    }
+    // Straight into the story. The animated opening is available from How to play.
+    state.started = true
+    save()
+    update()
+    track('prologue_skipped_by_default')
+    renderNode(saved ? state.node : 'letter')
   }
 }
 $('#setup').addEventListener('cancel', (e) => {
@@ -1523,5 +1725,6 @@ function showPlan() {
 window.addEventListener('pagehide', save)
 syncSound()
 update()
+buildHeroArt()
 preparePresenter()
 openDialog(welcome)

@@ -37,15 +37,26 @@ export function loadImage(src) {
 
 /**
  * Pixelate an image or file into a square portrait.
+ *
+ * Two knobs control how "pixelated" the result looks, and they do different things:
+ *   size        how many pixels across. Small = chunky blocks. 32 is very blocky; 64 keeps a face readable.
+ *   paletteMix  how hard the colours snap to the Hearthvale palette. 1 posterises heavily (skin goes
+ *               orange or grey), 0 keeps the photo's own colour. Around 0.45 reads as pixel art while
+ *               still looking like the person.
+ *
  * @param {File|Blob|HTMLImageElement|string} source
- * @param {object} [opts]  size (pixels across, default 32), scale (output upscale, default 8),
- *                          focus 'top' keeps the upper part of portrait photos (faces), palette true/false
+ * @param {object} [opts]  size (default 64), scale (output upscale, default 4),
+ *                         focus 'top' keeps the upper part of portrait photos (faces),
+ *                         palette false to skip snapping entirely, paletteMix 0..1 (default 0.45),
+ *                         contrast (default 1.08)
  * @returns {Promise<string>} PNG data URL, size*scale pixels square
  */
 export async function pixelate(source, opts = {}) {
-  const size = opts.size || 32,
-    scale = opts.scale || 8,
-    usePalette = opts.palette !== false
+  const size = opts.size || 64,
+    scale = opts.scale || 4,
+    usePalette = opts.palette !== false,
+    mix = opts.paletteMix === undefined ? 0.45 : Math.max(0, Math.min(1, opts.paletteMix)),
+    contrast = opts.contrast === undefined ? 1.08 : opts.contrast
   let img = source
   if (typeof source === 'string') img = await loadImage(source)
   else if (!(source instanceof HTMLImageElement)) {
@@ -94,15 +105,18 @@ export async function pixelate(source, opts = {}) {
   smctx.drawImage(stage, 0, 0, cw, ch, 0, 0, size, size)
   const data = smctx.getImageData(0, 0, size, size)
   const px = data.data
-  // Contrast lift so quantized faces keep their features.
+  // Gentle contrast lift so features survive, then an optional partial snap to the palette.
+  // Blending rather than replacing is what keeps a real face looking like that face.
   for (let i = 0; i < px.length; i += 4) {
-    let r = px[i],
-      g = px[i + 1],
-      b = px[i + 2]
-    r = Math.max(0, Math.min(255, (r - 128) * 1.15 + 128))
-    g = Math.max(0, Math.min(255, (g - 128) * 1.15 + 128))
-    b = Math.max(0, Math.min(255, (b - 128) * 1.15 + 128))
-    if (usePalette) [r, g, b] = nearest(r, g, b)
+    let r = Math.max(0, Math.min(255, (px[i] - 128) * contrast + 128)),
+      g = Math.max(0, Math.min(255, (px[i + 1] - 128) * contrast + 128)),
+      b = Math.max(0, Math.min(255, (px[i + 2] - 128) * contrast + 128))
+    if (usePalette && mix > 0) {
+      const [pr, pg, pb] = nearest(r, g, b)
+      r += (pr - r) * mix
+      g += (pg - g) * mix
+      b += (pb - b) * mix
+    }
     px[i] = r
     px[i + 1] = g
     px[i + 2] = b
@@ -120,7 +134,7 @@ export async function pixelate(source, opts = {}) {
 
 /** Simple validation for stored avatars: only tiny PNG data URLs are accepted back from storage. */
 export function validAvatar(s) {
-  return typeof s === 'string' && s.startsWith('data:image/png;base64,') && s.length < 60000
+  return typeof s === 'string' && s.startsWith('data:image/png;base64,') && s.length < 180000
 }
 
 /**

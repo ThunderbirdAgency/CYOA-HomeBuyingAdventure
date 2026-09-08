@@ -2937,3 +2937,102 @@ footer b {
 @media (prefers-reduced-motion: reduce) {
   .map-doc { animation: none !important; }
 }
+
+/* ===================== v2.1: the traveler is a character, not a card ===================== */
+/* The old token was a bordered, rounded, glowing box — it read as a playing card. A character
+   should be just the art: no frame, no radius, only a soft ground shadow so it sits on the map. */
+.hero-token {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background-color: transparent;
+  width: 30px;
+  height: 42px;
+  filter: drop-shadow(0 2px 2px rgba(6, 24, 18, 0.55)) !important;
+}
+.hero-token.avatar {
+  border: 0 !important;
+  border-radius: 0 !important;
+  width: 30px;
+  height: 42px;
+  background-size: 100% 100% !important;
+  background-position: 0 0 !important;
+}
+/* Sprite-sheet mode: four walk frames side by side, stepped by data-frame on #traveler. */
+.hero-token.sheet {
+  background-repeat: no-repeat;
+  background-size: 400% 100% !important;
+  background-position: 0% 0% !important;
+  image-rendering: pixelated;
+}
+#traveler[data-frame='1'] .hero-token.sheet { background-position: 33.333% 0% !important; }
+#traveler[data-frame='2'] .hero-token.sheet { background-position: 66.667% 0% !important; }
+#traveler[data-frame='3'] .hero-token.sheet { background-position: 100% 0% !important; }
+/* With real walk frames the bob is redundant; keep a gentle idle breath instead. */
+#traveler.walking .hero-token.sheet { animation: none; }
+.hero-token.sheet { animation: idle-breathe 2.4s ease-in-out infinite; }
+@keyframes idle-breathe {
+  50% { translate: 0 -1px; }
+}
+#traveler i {
+  width: 16px;
+  height: 4px;
+  background: #0b1c1780;
+  filter: blur(1px);
+}
+/* Dialogue portraits use the same character, so the person on the map is the person talking. */
+.character .portrait.hero-portrait.sheet {
+  background-size: cover;
+  background-position: center;
+  border-radius: 10px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-token.sheet { animation: none; }
+}
+/* The opening game is the main event on its scene, not a footnote. */
+.minigame-launch.feature {
+  border-style: solid;
+  border-width: 2px;
+  background: linear-gradient(90deg, #2c5a44, #1a3d31);
+  box-shadow: 0 6px 0 #0a1c16;
+  margin: 18px 0 10px;
+  padding: 18px;
+}
+.minigame-launch.feature strong { font-size: 18px; }
+.minigame-launch.feature:hover { box-shadow: 0 4px 0 #0a1c16; }
+.voice-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.voice-row select {
+  flex: 1;
+  min-width: 0;
+}
+.voice-row .secondary {
+  padding: 9px 14px;
+  white-space: nowrap;
+}
+/* Setup: show the whole character, not a portrait in a frame. */
+.photo-preview.char {
+  width: 120px;
+  height: 156px;
+  border: 1px dashed #2d4438;
+  border-radius: 12px;
+  background: radial-gradient(circle at 50% 65%, #1e4033, #0c211d 70%);
+  position: relative;
+}
+.photo-preview.char img {
+  image-rendering: pixelated;
+  display: block;
+  margin: auto;
+}
+.photo-preview.char img:not([src]) { display: none; }
+.photo-preview.char .photo-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+}
+.photo-preview.char .photo-empty[hidden] { display: none; }

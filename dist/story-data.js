@@ -266,39 +266,48 @@ export const episode = {
   estimatedMinutes: 10,
   nodes: {
     letter: {
-      speaker: '{{name}} · a new beginning',
+      speaker: 'Bartleby Quill · your landlord',
       symbol: '✉',
       title: 'Rent day. Again.',
       text: [
-        `Your boots are by the door. Another workday is finished, and another rent payment has left your account. The cottage is comfortable enough. The “no painting the walls” rule is less comfortable.`,
-        `The landlord’s receipt arrives with its usual cheerful stamp. You put it beside a sketch of a place you could make your own. Not a castle. Just a front door that opens onto your next chapter.`,
-        `A note slips under the door: “There is a path from wondering to knowing what to do next. Meet me outside. Bring your questions. — Rowan.”`,
+        `Three knocks, cheerful as a birthday. Bartleby Quill fills your doorway in a plum coat and a hat one size too tall, ledger open, palm already out. “Rent!” he beams, as though announcing a festival.`,
+        `“And a small convenience fee. And a doorknob levy, you have two. And the sunlight surcharge, your window faces east, which is a premium exposure.” He licks a fingertip and turns a page. “Also the walls are looking beige. Do not paint them.”`,
+        `He tips his hat, pockets your month, and is gone. On the table, beside the receipt with its cheerful little stamp, is a sketch of a place you could make your own. Not a castle. Just a front door that opens onto your next chapter.`,
       ],
-      choices: [c('Meet Rowan outside.', 'rowan', 'Your first quest begins here.')],
+      minigame: 'rent-day',
+      minigameLabel: 'Keep what you can →',
+      minigameBlurb: 'Bartleby is on his way back. Catch the coins before he does.',
+      choices: [
+        c('Enough. What are my options?', 'rowan', 'A note under the door is already waiting.'),
+      ],
     },
     rowan: {
       speaker: 'Rowan · your guide',
       symbol: '✦',
       title: 'Here is your quest, {{name}}.',
       text: [
-        `“You’re here for {{goalText}}. That is a good reason to begin.” Rowan unfolds a map. “This first adventure is a practice run. You’ll meet your guides, weigh two homes, and handle one surprise.”`,
-        `“Collect three tools: Mira’s Budget Compass, Sage’s Clear-Sight Lens, and the Homeward Map. Then visit Three-Door Lane and cross the lantern bridge. That earns your First Key and unlocks your own buying plan.”`,
-        `Today’s household and dollar amounts are fictional. Your character and goals personalize the journey; the game is not deciding what you can borrow.`,
+        `Outside, someone is leaning on the fence as if they had been waiting a while. “Rowan,” they say. “I help people stop paying Bartleby.”`,
+        `“One question before we start, and it is the only one that matters. If a door had your name on it, what would you want on the other side?”`,
       ],
       choices: [
-        c('I’m in. Show me the first stop.', 'purpose', 'Get a clear destination and start exploring.'),
+        c('Somewhere to settle in.', 'purpose', 'Stability. A place that stays put.', { goal: 'stability' }),
+        c('More room for my life.', 'purpose', 'Space. For people, work, or both.', { goal: 'space' }),
+        c('Walls I am allowed to paint.', 'purpose', 'Control. Bartleby would hate it.', { goal: 'control' }),
       ],
     },
     purpose: {
       speaker: 'Rowan · your guide',
       symbol: '✦',
-      title: 'One step at a time.',
+      title: 'Then we walk.',
       text: [
-        `“Tap a glowing place to visit it. Talk to the person there and choose what to do. The button above your map will always take you to your next stop.”`,
-        `“There is no countdown, and you don’t have to answer everything perfectly. The back button lets you explore another choice. Waiting or walking away can be a wise decision, too.”`,
-        `Rowan taps your map. “First, {{firstStop}}. I’ll meet you at the bridge when you have the three tools.”`,
+        `“{{goalText}}. Good reason.” Rowan unfolds a map of Hearthvale and taps three places. “Three tools, one house decision, one bridge. Ten minutes. Nothing here can go wrong for you.”`,
+        `“Last thing: when might you actually want to move?”`,
       ],
-      choices: [c('Go to my first stop.', '@next', 'Follow the highlighted destination.')],
+      choices: [
+        c('Within six months.', '@next', 'Soon. Let’s be ready.', { timeline: 'soon' }),
+        c('Sometime this year or next.', '@next', 'There is time to prepare.', { timeline: 'later' }),
+        c('Honestly, I’m just looking.', '@next', 'No deadline. Explore.', { timeline: 'exploring' }),
+      ],
       complete: 'cottage',
     },
     market: {
@@ -306,9 +315,9 @@ export const episode = {
       symbol: '◇',
       title: 'The price on the sign.',
       text: [
-        `Mira’s shop smells of oranges and fresh bread. Behind the counter hang travel packs of every size. You reach for the largest. She raises an eyebrow. “Everything fits in that one. Including the things you don’t need.”`,
-        `She rolls out two home brochures. Willow Cottage shows $1,600 a month in bold letters. Lantern House shows $2,200. “Those are only the principal-and-interest payments in our fictional offers. Turn the brochures over.”`,
-        `The quieter numbers tell the rest of the story. Look at the full monthly household cost before deciding which pack you want to carry.`,
+        `Mira’s shop smells of oranges and bread. You reach for the largest travel pack. She raises an eyebrow. “Everything fits in that one. Including the things you don’t need.”`,
+        `She rolls out two brochures. Willow Cottage: $1,600 a month, in bold. Lantern House: $2,200. “Those are only the loan payments. Turn them over.”`,
+        `The quieter numbers tell the rest of the story.`,
       ],
       widget: 'compare',
       source: 'budget',
@@ -328,9 +337,9 @@ export const episode = {
       symbol: '◇',
       title: 'What is left for living?',
       text: [
-        `Mira counts out six stacks of coins. “Your take-home income is $6,000. Everyday expenses and existing debt payments use $2,100. You also want to save $500 each month.”`,
-        `She slides your chosen home’s costs across the counter. The remaining amount is {{margin}} a month. That money must absorb anything you did not anticipate.`,
-        `“Extra space has value. So does being able to sleep when the refrigerator makes a strange noise. Which tradeoff can you live with?”`,
+        `Mira counts out six stacks. “Take-home, $6,000. Living costs and debts, $2,100. You want to save $500.”`,
+        `She slides your home’s costs across. That leaves {{margin}} a month to absorb anything you did not see coming.`,
+        `“Space is worth something. So is sleeping through a strange noise from the refrigerator. Which trade can you live with?”`,
       ],
       widget: 'monthly',
       source: 'budget',
@@ -344,9 +353,9 @@ export const episode = {
       symbol: '◇',
       title: 'Pack for the unexpected.',
       text: [
-        `Now Mira sets your savings on the counter: $18,000. In this story, $10,000 is earmarked for the down payment, $3,000 for other closing costs, and $1,000 for moving. That leaves $4,000.`,
-        `Across the shop is a beautiful furniture set. You imagine it in your new living room. Mira puts an empty emergency pouch beside it. “Same coins. Two jobs.”`,
-        `Choose how much of the remaining $4,000 to keep in the pouch. This is practice with a small fictional cushion, not a recommendation for your own reserve target.`,
+        `Mira sets your savings out: $18,000. Ten for the down payment, three for closing costs, one to move. Four thousand left.`,
+        `Across the shop, a beautiful furniture set. You can picture it. Mira sets an empty emergency pouch beside it. “Same coins. Two jobs.”`,
+        `Split the $4,000. Practice with a fictional cushion, not a recommended reserve.`,
       ],
       widget: 'reserve',
       source: 'budget',
@@ -368,6 +377,8 @@ export const episode = {
       item: 'compass',
       complete: 'market',
       minigame: 'coin-catch',
+      minigameLabel: 'Mira’s coin game →',
+      minigameBlurb: 'Catch coins for the pouch. Dodge the things you do not need.',
       choices: [c('Go to my next stop.', '@next', 'Your map will lead the way.')],
     },
     guild: {
@@ -375,8 +386,8 @@ export const episode = {
       symbol: '⚑',
       title: 'Choose your questions first.',
       text: [
-        `The guild hall is full of maps. Some show houses; others show numbers. Nobody’s map shows everything. Sage pulls out a chair. “An agent can help with the property search and transaction. A lender works on financing. An inspector examines the home’s condition. Ask each person what they do, how they are paid, and where their work ends.”`,
-        `A messenger bursts in carrying an ornate scroll. “The lowest payment in all Hearthvale!” he announces. Sage waits until the door closes. “What would you ask before trusting that claim?”`,
+        `Maps everywhere. Some show houses, some show numbers, none show everything. Sage pulls out a chair. “Agent finds the house. Lender does the money. Inspector checks the bones. Ask each one what they do and how they get paid.”`,
+        `A messenger bursts in waving a scroll. “Lowest payment in all Hearthvale!” Sage waits for the door to shut. “So. What would you ask him?”`,
       ],
       source: 'loans',
       choices: [
@@ -430,6 +441,8 @@ export const episode = {
       item: 'lens',
       complete: 'guild',
       minigame: 'offer-match',
+      minigameLabel: 'Sage’s scroll test →',
+      minigameBlurb: 'Two offers, eight rounds. Spot the one that is hiding something.',
       choices: [c('Go to my next stop.', '@next')],
     },
     course: {
@@ -437,9 +450,8 @@ export const episode = {
       symbol: '▤',
       title: 'A big journey, in smaller steps.',
       text: [
-        `Ellis clears a desk by the tower window. “From up here, everyone looks as if they know where they’re going. Come closer and you find out most people are figuring it out one turn at a time.”`,
-        `Your route is taking shape: {{goalText}}. Your question is {{questionText}}. Ellis draws a path across a blank sheet and marks the major stages of buying a home.`,
-        `“The details depend on your situation. Your agent and lender can explain what applies to you. Here is the broad shape of the journey.”`,
+        `Ellis clears a desk by the tower window. “From up here everyone looks like they know where they’re going. Get closer and they’re all figuring it out one turn at a time.”`,
+        `They draw the road from here to a front door. “Details depend on your situation. This is the shape of it.”`,
       ],
       widget: 'roadmap',
       choices: [
@@ -483,9 +495,9 @@ export const episode = {
       symbol: '⌂',
       title: 'A house, and the life around it.',
       text: [
-        `Nell meets you beside three front doors. One has a wide garden, one a sunny upstairs room, and one a workbench visible through the window. You remember what brought you here: {{priority}}.`,
-        `“You chose {{homeName}} at the market. Let’s walk through it.” You pause in the doorway. The afternoon light is exactly right. For a moment, every question in your head disappears.`,
-        `Then a drop of water lands on the windowsill. There is a dark patch above it. Nell watches your expression. “Still want to ask those questions?”`,
+        `Three front doors. A garden, a sunny upstairs room, a workbench in the window. You remember what brought you here: {{priority}}.`,
+        `“{{homeName}}, then. Let’s walk it.” You stop in the doorway. The afternoon light is exactly right, and every question in your head goes quiet.`,
+        `Then a drop of water hits the windowsill. Dark patch above it. Nell watches your face. “Still want to ask those questions?”`,
       ],
       source: 'inspection',
       choices: [
@@ -596,6 +608,8 @@ export const episode = {
       ],
       complete: 'homes',
       minigame: 'inspection-hunt',
+      minigameLabel: 'Search the house →',
+      minigameBlurb: 'Seven things are wrong in there. Find them before the clock does.',
       choices: [c('Go to the lantern bridge.', '@next', 'Claim your First Key.')],
     },
     bridge: {
@@ -603,9 +617,8 @@ export const episode = {
       symbol: '⚿',
       title: 'The door beyond the bridge.',
       text: [
-        `From the bridge, you can see the whole town: the cottage where you began, the provisioner’s awning, the mapmaker’s tower. It is a small distance on a map. It feels longer in your head.`,
-        `Above the gate towers, a banner snaps in the wind. “That flag belongs to the lender who keeps this gate,” Rowan says. “He is the one person in Hearthvale who is not made up. Go say hello before you choose your next step.”`,
-        `“You could collect keys forever. But eventually the useful question is what you will do with what you learned.”`,
+        `From the bridge you can see the whole town: your cottage, Mira’s awning, the tower. A short walk on a map. Longer in your head.`,
+        `A banner snaps above the gate. “That flag belongs to the lender who keeps this gate,” Rowan says. “Only person in Hearthvale who isn’t made up. Go say hello.”`,
       ],
       choices: [
         c('Meet the lender at the gate.', 'lender', 'Bring your coin pouch. He has a trick with it.'),
@@ -616,13 +629,15 @@ export const episode = {
       symbol: '⚑',
       title: 'Let’s look at that pouch, {{name}}.',
       text: [
-        `“Everything else in Hearthvale is fiction. I’m not. I’m {{presenterName}}, a {{presenterRole}} with {{presenterCompany}}, and this game is my way of saying the first conversation should be easy.”`,
-        `He weighs your coin pouch in one hand. “{{coins}} coins. In this story a coin is worth $100 of down payment, so that is {{coinDollars}} more toward the house. On a fictional 30-year loan at {{fictionalRate}}, that lowers the monthly payment by about {{coinSavings}}. A bigger down payment can also shrink or remove mortgage insurance.”`,
-        `“Play the arcade games around town and the pouch gets heavier. In real life the pouch is savings, gifts, and assistance programs. Ask me about those any time.”{{partnerLine}}`,
+        `“Everything else here is made up. I’m not. {{presenterName}}, {{presenterRole}} with {{presenterCompany}}. This game is my way of saying the first conversation should be easy.”`,
+        `He weighs your pouch. “{{coins}} coins, and a coin is $100 of down payment here. That’s {{coinDollars}} more down, about {{coinSavings}} off the payment on a fictional 30-year loan at {{fictionalRate}}. More down can shrink mortgage insurance too.”`,
+        `“Games around town fill the pouch. In real life it’s savings, gifts, and assistance programs. Ask me about those any time.”{{partnerLine}}`,
       ],
       widget: 'downpayment',
       source: 'downPayment',
       minigame: 'down-payment-dash',
+      minigameLabel: 'Run for the down payment →',
+      minigameBlurb: 'Every coin you grab comes off the payment. Mind the surprise expenses.',
       choices: [
         c('What programs help buyers in Arizona?', 'arizona', 'Down payment help, VA, FHA, and what to ask.'),
         c('What would you ask me first?', 'lender-questions', 'Three questions, none of them scary.'),
@@ -891,9 +906,25 @@ export function recordMinigame(state, result) {
 export function unlocked(state, loc) {
   return loc.requires.every((id) => state.done.includes(id))
 }
+/**
+ * Apply a choice's data without moving the player. Split out from choose() because some
+ * choices route to an action (@next, @plan) rather than a scene, and their answers must
+ * still be recorded — the opening scene asks the player's timing on an @next choice.
+ */
+export function applyChoice(state, choice) {
+  if (!choice.set) return state
+  Object.assign(state.vars, choice.set)
+  // Profile answers are asked in dialogue rather than on a setup form.
+  if (choice.set.focus) state.profile.question = choice.set.focus
+  if (choice.set.goal) {
+    state.profile.goal = choice.set.goal
+    state.vars.priority = choice.set.goal
+  }
+  if (choice.set.timeline) state.profile.timeline = choice.set.timeline
+  return state
+}
 export function choose(state, choice) {
-  if (choice.set) Object.assign(state.vars, choice.set)
-  if (choice.set?.focus) state.profile.question = choice.set.focus
+  applyChoice(state, choice)
   state.node = choice.to
   return state
 }
@@ -942,7 +973,7 @@ export function restoreState(raw) {
   s.docs = (Array.isArray(raw.docs) ? raw.docs : []).filter((id) => mapDocs.some((d) => d.id === id))
   s.lead = raw.lead && typeof raw.lead === 'object' ? raw.lead : {}
   s.avatar =
-    typeof raw.avatar === 'string' && raw.avatar.length < 60000 && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(raw.avatar)
+    typeof raw.avatar === 'string' && raw.avatar.length < 400000 && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(raw.avatar)
       ? raw.avatar
       : null
   if (

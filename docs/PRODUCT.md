@@ -1,5 +1,37 @@
 # The First Key — product and technical notes
 
+## Version 2.2 — play first (September 2026)
+
+Playtest feedback was that the game front-loaded reading and the player did not feel like a character:
+"you're keeping people in the wordy section instead of the playing section", "the character looks like a
+playing card", "they move really fast and are not led by the mouse", "the voice is Microsoft", the images
+were too pixelated, and the uploaded photo "didn't fundamentally change the character". This version answers
+each of those.
+
+- **Play in the first ten seconds.** The opening is now Bartleby Quill, the landlord, arriving for rent plus a
+  doorknob levy and a sunlight surcharge, with **Rent Day** (a new mini-game) as the featured action on that
+  scene. The four-slide prologue no longer plays automatically; it lives under How to play.
+- **No setup form.** Character setup is one screen: name and look. Rowan asks what the player wants behind
+  their door and when they might move, so the profile is built through dialogue. `applyChoice()` records
+  answers on choices that route to an action, which `choose()` previously dropped.
+- **A real character.** `character.js` draws a 16×22 pixel adventurer with a four-frame walk cycle and three
+  distinct heroes. The player's photo is composited into the character's own head, masked to the face pixels
+  with the hair drawn back over the top, so the photo becomes who walks the map and who appears in dialogue.
+  The card border, radius and glow are gone.
+- **Walking feels like walking.** Speed cut from 30 to 16 percent per second with acceleration, direction
+  normalised in pixel space so diagonals travel straight instead of curving around the destination, and
+  holding the mouse down leads the character like a leash. Walk frames advance with distance travelled.
+- **Better voices.** `voice.js` ranks the device's voices, prefers natural and neural ones, and ranks
+  Microsoft David, Zira and Mark last. Players can pick and preview a voice. Pre-rendered ElevenLabs
+  narration is supported through a manifest, with a generator script and a dry-run cost estimate.
+- **Less pixelated portraits.** `pixelate()` gained a `paletteMix` so colours blend toward the palette rather
+  than snapping to it; presenter portraits went from 40px hard-snapped to 72px at 0.35 mix, which is the
+  difference between a smudge and a recognisable person. Player faces are extracted at 64px with an adaptive
+  palette taken from the photo.
+- **More reasons to play.** Every location's game has an in-world name and a reason ("Mira's coin game",
+  "Sage's scroll test", "Search the house", "Run for the down payment"). Main-path prose was cut by about
+  200 words.
+
 ## Version 2.0 (September 2026)
 
 Built on the 1.1 episode. Adds:

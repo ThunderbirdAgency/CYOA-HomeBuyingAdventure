@@ -1,0 +1,186 @@
+{
+  "generated": "2026-09-08T19:26:48.378Z",
+  "source": "dist/story-data.js",
+  "episode": "first-key",
+  "episodeVersion": 3,
+  "nodeCount": 34,
+  "totalCharacters": 17771,
+  "estimate": {
+    "characters": 17771,
+    "ratePer1kUsd": 0.22,
+    "usd": 3.91,
+    "note": "ElevenLabs bills roughly one credit per character. Prices change; treat this as an estimate."
+  },
+  "lines": [
+    {
+      "id": "letter",
+      "characters": 685,
+      "text": "Rent day. Again. Three knocks, cheerful as a birthday. Bartleby Quill fills your doorway in a plum coat and a hat one size too tall, ledger open, palm already out. “Rent!” he beams, as though announcing a festival. “And a small convenience fee. And a doorknob levy, you have two. And the sunlight surcharge, your window faces east, which is a premium exposure.” He licks a fingertip and turns a page. “Also the walls are looking beige. Do not paint them.” He tips his hat, pockets your month, and is gone. On the table, beside the receipt with its cheerful little stamp, is a sketch of a place you could make your own. Not a castle. Just a front door that opens onto your next chapter."
+    },
+    {
+      "id": "rowan",
+      "characters": 303,
+      "text": "Here is your quest, traveler. Outside, someone is leaning on the fence as if they had been waiting a while. “Rowan,” they say. “I help people stop paying Bartleby.” “One question before we start, and it is the only one that matters. If a door had your name on it, what would you want on the other side?”"
+    },
+    {
+      "id": "purpose",
+      "characters": 243,
+      "text": "Then we walk. “your goal. Good reason.” Rowan unfolds a map of Hearthvale and taps three places. “Three tools, one house decision, one bridge. Ten minutes. Nothing here can go wrong for you.” “Last thing: when might you actually want to move?”"
+    },
+    {
+      "id": "market",
+      "characters": 386,
+      "text": "The price on the sign. Mira’s shop smells of oranges and bread. You reach for the largest travel pack. She raises an eyebrow. “Everything fits in that one. Including the things you don’t need.” She rolls out two brochures. Willow Cottage: $1,600 a month, in bold. Lantern House: $2,200. “Those are only the loan payments. Turn them over.” The quieter numbers tell the rest of the story."
+    },
+    {
+      "id": "budget-choice",
+      "characters": 362,
+      "text": "What is left for living? Mira counts out six stacks. “Take-home, $6,000. Living costs and debts, $2,100. You want to save $500.” She slides your home’s costs across. That leaves what is left a month to absorb anything you did not see coming. “Space is worth something. So is sleeping through a strange noise from the refrigerator. Which trade can you live with?”"
+    },
+    {
+      "id": "reserve",
+      "characters": 359,
+      "text": "Pack for the unexpected. Mira sets your savings out: $18,000. Ten for the down payment, three for closing costs, one to move. Four thousand left. Across the shop, a beautiful furniture set. You can picture it. Mira sets an empty emergency pouch beside it. “Same coins. Two jobs.” Split the $4,000. Practice with a fictional cushion, not a recommended reserve."
+    },
+    {
+      "id": "market-end",
+      "characters": 554,
+      "text": "You found the Budget Compass. The little brass compass does not point north. It points toward a question: “Can I carry this and still live my life?” Your emergency pouch now holds your reserve. Your choice will matter when something unexpected happens. Mira wraps the compass in a cloth. “Take it with you. A bigger number on an approval letter doesn’t get to decide what feels comfortable in your kitchen.” Include taxes, insurance, utilities, upkeep, and other applicable costs. Keep closing expenses and emergency money separate from the down payment."
+    },
+    {
+      "id": "guild",
+      "characters": 391,
+      "text": "Choose your questions first. Maps everywhere. Some show houses, some show numbers, none show everything. Sage pulls out a chair. “Agent finds the house. Lender does the money. Inspector checks the bones. Ask each one what they do and how they get paid.” A messenger bursts in waving a scroll. “Lowest payment in all Hearthvale!” Sage waits for the door to shut. “So. What would you ask him?”"
+    },
+    {
+      "id": "guild-hasty",
+      "characters": 489,
+      "text": "The smallest number can hide a larger story. Sage turns the scroll over. The payment leaves out several costs, and a ribbon covers the section about fees. “We haven’t learned enough to call this a bargain.” “Ask for comparable Loan Estimates. Look at the loan type, interest rate, mortgage insurance, closing costs, and whether payments can change. Two offers only make sense beside each other when you know what is different.” The messenger returns for his ribbon. You keep the questions."
+    },
+    {
+      "id": "guild-wise",
+      "characters": 458,
+      "text": "A question worth carrying. “Exactly.” Sage lays two blank frames side by side. “Ask lenders for Loan Estimates for the same loan features. Then compare the costs and terms. A low advertised payment is a starting point for questions.” You jot down: What is included? What can change? What must I bring to closing? What are my alternatives? “And receiving a Loan Estimate does not mean you are approved. Documents have jobs. Learn which job each one is doing.”"
+    },
+    {
+      "id": "guild-end",
+      "characters": 526,
+      "text": "You found the Clear-Sight Lens. Sage gives you a small lens with a green rim. Through it, the tiny writing on the ornate scroll looks just as large as the headline. “A good guide makes the details clearer,” Sage says. “They should leave you with more understanding, not fewer questions.” Beyond the guild, the mapmaker’s tower is glowing. When you have gathered your first two tools, the path to it will open. Request comparable Loan Estimates and review both upfront and ongoing costs. Ask questions before choosing a lender."
+    },
+    {
+      "id": "course",
+      "characters": 309,
+      "text": "A big journey, in smaller steps. Ellis clears a desk by the tower window. “From up here everyone looks like they know where they’re going. Get closer and they’re all figuring it out one turn at a time.” They draw the road from here to a front door. “Details depend on your situation. This is the shape of it.”"
+    },
+    {
+      "id": "course-end",
+      "characters": 503,
+      "text": "You found the Homeward Map. Ellis draws a little house at the far end of the road. “That is the long-term destination. Today’s finish line is the bridge, where you will choose a practical next step.” The map changes to match what you just said. Your next chapter will focus on your focus. You can change your goal, timing, or question in My Adventurer whenever your situation changes. The lights of Three-Door Lane are coming on. “Go look at your house,” Ellis says. “And keep those questions with you.”"
+    },
+    {
+      "id": "homes",
+      "characters": 436,
+      "text": "A house, and the life around it. Three front doors. A garden, a sunny upstairs room, a workbench in the window. You remember what brought you here: your priority. “the home you chose, then. Let’s walk it.” You stop in the doorway. The afternoon light is exactly right, and every question in your head goes quiet. Then a drop of water hits the windowsill. Dark patch above it. Nell watches your face. “Still want to ask those questions?”"
+    },
+    {
+      "id": "appraisal",
+      "characters": 509,
+      "text": "Two different jobs. “An appraisal and an inspection answer different questions,” Nell says. “The appraisal is about value for the lending process. An independent inspection examines condition.” The sun shifts. The stain is still there. You do not need to panic, but you do need more information. Nell helps you prepare questions for the inspector: Where is the water coming from? What else should be checked? Should a specialist look at it? An appraisal is not a substitute for an independent home inspection."
+    },
+    {
+      "id": "inspection",
+      "characters": 565,
+      "text": "An unwelcome discovery. For our fictional scenario, a qualified roofer follows up on the inspection and estimates $3,000 to fix the leak. Nell sets the written estimate on the table. The house still feels right. The repair does not disappear because of that. You have your reserve in the emergency pouch you packed earlier. Paying $3,000 from it would leave what is left after the repair. Your ongoing monthly breathing room is what is left. The seller might negotiate, but agreement is not guaranteed. The contract and deadlines matter. How do you want to respond?"
+    },
+    {
+      "id": "negotiate",
+      "characters": 518,
+      "text": "A deal has two sides. In this branch, the seller agrees to have the specified repair completed before closing, subject to the written agreement and verification. The tidy ending comes from this authored scenario; real sellers can say no. Your emergency pouch stays at your reserve. You still need to review the work and confirm your loan and closing requirements. A verbal promise does not finish the job. “You didn’t win by demanding a perfect house,” Nell says. “You got the information and made a specific request.”"
+    },
+    {
+      "id": "self-fund",
+      "characters": 417,
+      "text": "Earlier choices have footsteps. You run the numbers again. After this $3,000 repair, your pouch would hold what is left after the repair. the result. “That is why we practiced at the market,” Nell says. “The furniture and the repair were spending the same money, even when you could only see one of them.” You can reconsider before moving on. Choosing a home is not a test of whether you can defend your first answer."
+    },
+    {
+      "id": "step-back",
+      "characters": 509,
+      "text": "The courage to choose another door. You ask Nell to explain the contract’s contingencies and deadlines before taking action. Whether you can cancel and recover a deposit depends on your actual agreement and circumstances. In this story, your next step is to review those options and pause this purchase. There is disappointment. There is also room for another possibility. Outside, the other two doors are still catching the sun. You have not failed to find a home. You have learned what this one asks of you."
+    },
+    {
+      "id": "homes-end",
+      "characters": 401,
+      "text": "You came back with better questions. Rowan is waiting at the end of the lane. You show them the compass, lens, and map. None has made the world simple. Each has made it easier to understand. “Ready for the bridge?” they ask. “There is one last choice waiting there.” The lanterns along the stone rail begin to glow. Beyond them is the road toward your next chapter. You take a breath and open the map."
+    },
+    {
+      "id": "bridge",
+      "characters": 314,
+      "text": "The door beyond the bridge. From the bridge you can see the whole town: your cottage, Mira’s awning, the tower. A short walk on a map. Longer in your head. A banner snaps above the gate. “That flag belongs to the lender who keeps this gate,” Rowan says. “Only person in Hearthvale who isn’t made up. Go say hello.”"
+    },
+    {
+      "id": "lender",
+      "characters": 591,
+      "text": "Let’s look at that pouch, traveler. “Everything else here is made up. I’m not. Erik Miller, mortgage consultant with Patriot Home Mortgage. This game is my way of saying the first conversation should be easy.” He weighs your pouch. “your coins coins, and a coin is $100 of down payment here. That’s your coin total more down, about the monthly difference off the payment on a fictional 30-year loan at the fictional rate. More down can shrink mortgage insurance too.” “Games around town fill the pouch. In real life it’s savings, gifts, and assistance programs. Ask me about those any time.”"
+    },
+    {
+      "id": "albert",
+      "characters": 598,
+      "text": "Welcome to the Loan Castle keep. Inside the gate tower, past a wall of neatly labeled shelves, someone looks up from a perfectly squared stack of folders and grins. “You made it! I’m Albert Luc. Erik does the lending. I make sure nothing is missing when it is time to lend, and I answer the phone when it rings at nine at night.” “Everybody who knows Erik knows me. Around here they call me the paperwork wizard: pay stubs, W-2s, bank statements, ID, tax returns. I know what a lender needs before they ask for it. I collect everything except money; the money stays in your pouch.” “your documents”"
+    },
+    {
+      "id": "albert-docs",
+      "characters": 723,
+      "text": "Five papers, one folder. Albert pulls a clean folder off the shelf and labels five tabs without looking. “When you are ready to get pre-approved, these are what a lender usually asks to see. Not today. But the earlier they are in one place, the faster the real conversation goes, and keeping them in one place is my whole job.” “A pre-approval letter is a lender saying, based on what you showed us, here is what we expect to lend. It is not a promise until underwriting finishes, and it does not decide what payment feels comfortable. That part is still yours.” Gather pay stubs, W-2s or tax returns, bank statements, and photo ID before you ask for pre-approval. A preapproval letter is an estimate, not a final approval."
+    },
+    {
+      "id": "albert-quest",
+      "characters": 834,
+      "text": "The Augusta wind. “Here is the thing,” Albert says, nodding toward the window. “The Augusta wind came through Hearthvale this morning. It does that every autumn. It blew your cottage window open and I watched your paperwork go sailing over the rooftops: pay stubs, W-2s, bank statements, your photo ID, your tax returns. All five.” “Good news: I was watching. I know where every one of them landed.” He unfolds your map and marks five spots. “A pay stub on the cottage road, a W-2 by the pond, bank statements up near the tower, your ID out on the lane, tax returns down by the farm. Walk over each one and it is yours again. I will keep the tally.” “Bring them back and I will pack you a satchel that is ready before anyone asks for it. Take your time. I have been chasing paperwork for other people for years; I am very good at it.”"
+    },
+    {
+      "id": "albert-done",
+      "characters": 978,
+      "text": "All five. Not a page missing. Albert meets you at the keep door with a folder already open. Pay stubs, W-2s, bank statements, photo ID, tax returns: he checks each one against his list and slides it into its tab. “That is everything the wind took. Do you know how many people show up to a first meeting with none of these? You are ahead of the game, and the game is only ten minutes old.” He hands you a small canvas satchel with a brass clasp and drops a few coins in the outside pocket. “The satchel is for the documents. Keep them in it, keep them current, and the Augusta wind can do whatever it likes. The coins are because Erik said so. Money still is not my department.” “When it is the real thing, Erik and I will tell you exactly which versions of each we need. Pre-approval is a folder and a conversation. You already have the folder.” Keep your documents in one place and current. When you ask for pre-approval, a good team tells you exactly which versions they need."
+    },
+    {
+      "id": "arizona",
+      "characters": 1019,
+      "text": "Field notes from Arizona. “Hearthvale is green. Arizona is mostly sunshine, and it has a few programs worth knowing about. These change, so treat this as a map, not the terrain.” “Home Plus, run by the Arizona Industrial Development Authority, offers up to 4% in down payment and closing cost help statewide. In Maricopa County, Home in Five Advantage offers up to 5%, with an extra 1% for eligible buyers. VA-backed loans let most eligible veterans and service members buy with no down payment. FHA loans allow a lower down payment and are available to buyers with lower credit scores.” “Assistance usually comes as a second loan that is forgiven over time if you stay in the home, and each program has income limits and homebuyer education requirements. Ask which ones you qualify for and what they cost. That is a normal question. I answer it every week.” Down payment assistance, VA, and FHA programs each have rules that change. Ask a licensed lender which apply to you and what they cost before you count on them."
+    },
+    {
+      "id": "lender-questions",
+      "characters": 552,
+      "text": "Three questions, none of them scary. “One: when would you like to be moved in? Your answer was your timeline, which is a fine answer.” “Two: what monthly payment would let you sleep well? You practiced that at Mira’s shop. Three: what do savings and credit look like right now? Not a test. It tells me which programs and paths make sense, and what to work on if we need to wait.” “You do not have to answer any of that today. When you want to, the gate is open: call, text, or send me your buying plan from this game and I will read it before we talk.”"
+    },
+    {
+      "id": "bridge-choice",
+      "characters": 238,
+      "text": "Choose your next step. Rowan is waiting where the lanterns meet the road. “Well? What will you do with what you learned?” Choose a real-world next step. This does not commit you to a purchase, share your details, or submit an application."
+    },
+    {
+      "id": "ending",
+      "characters": 433,
+      "text": "First quest complete, traveler! You turn the little brass key in your hand. It is not a deed, an approval, or a promise. It is the beginning of knowing what to ask—and the confidence to ask it. your ending. You collected all three tools, faced your first house decision, and reached the bridge. Your First Key now opens Your Buying Plan: a short checklist shaped by your goals and questions. This opening quest is only the beginning."
+    },
+    {
+      "id": "portal",
+      "characters": 600,
+      "text": "Something hums near the waterfall. Off the marked paths, half hidden by mist, a ring of standing stones hums like a struck bell. Runes glow along the inner faces. You can read them, somehow: THE CREDIT COMPASS. A NUMBER IS NOT YOUR STORY. A smaller line runs around the base: “The seal opens for a traveler who leaves a name with the keeper of the gate.” The keeper of the gate is Erik Miller, the lender. Beyond the stones is a preview of a new series about reading your credit reports, fixing errors, and spotting shortcut sellers. No pressure. The main road to the bridge is still open either way."
+    },
+    {
+      "id": "portal-open",
+      "characters": 433,
+      "text": "The stones part. The runes brighten and the ring opens onto a quiet reading room that was not there a moment ago. On a lectern sits a ledger with your name on the cover. the preview is on its way. “Every borrower has one of these,” a voice says. It is nobody you have met; the Credit Compass has its own guides. “Three companies keep a copy. You are allowed to read yours for free, and reading it is where every credit story starts.”"
+    },
+    {
+      "id": "ledger",
+      "characters": 735,
+      "text": "What a score is, and is not. The ledger lists accounts, balances, payment history, and who has asked to see it. A score is a summary of this record at one moment, built by a formula. It is not a grade on you as a person, and it changes as the record changes. “Lenders read the whole ledger, not only the number,” the voice says. “Late payments, high balances compared to limits, and very new accounts weigh on it. Time and on-time payments lift it. Nobody can promise a specific jump by a specific date. Anyone who does is selling something.” You turn a page and stop. There is an entry you do not recognize. You can get your credit reports for free. Read them before a lender does, and know that no one can guarantee a score increase."
+    },
+    {
+      "id": "ledger-dispute",
+      "characters": 800,
+      "text": "An error is not a verdict. “Then you dispute it,” the voice says. “In writing, to the company that keeps the report and to the company that reported the account. Explain what is wrong, include copies of anything that proves it, and keep your own copies. They must investigate.” “That is the whole trick. No secret letter, no fee, no promise to erase true history. The Credit Compass series will walk through it entry by entry: the hidden ledger, the false entry, the steady path, and the shortcut seller.” A small stone rune drops into your pouch, and a handful of coins follow it. The room folds back into mist, and you are standing by the waterfall again with the bridge in sight. Dispute errors in writing with the credit reporting company and the information provider, with evidence. Keep copies."
+    }
+  ]
+}

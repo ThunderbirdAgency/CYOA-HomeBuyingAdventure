@@ -11,6 +11,7 @@ import {
   teaserPins,
   initialState,
   choose,
+  applyChoice,
   enter,
   unlocked,
   restoreState,
@@ -23,7 +24,7 @@ import { learningPlan, cleanProfile, nextLocation } from '../dist/profile.js'
 import { monthlyFor, coinsToDollars, coinsToMonthlySavings, config } from '../dist/config.js'
 
 const nodes = episode.nodes
-const MINIGAMES = ['coin-catch', 'offer-match', 'inspection-hunt', 'down-payment-dash']
+const MINIGAMES = ['rent-day', 'coin-catch', 'offer-match', 'inspection-hunt', 'down-payment-dash']
 const ACTIONS = ['@next', '@plan', '@journal', '@series', '@card', '@close', '@portal-unlock']
 
 /* ---------- authored graph is sound ---------- */
@@ -84,6 +85,7 @@ for (const order of [
         const s = initialState()
         assert.equal(unlocked(s, locations[3]), false)
         follow(s, ['letter', 'rowan', 'purpose'])
+        assert.ok(s.profile.goal && s.profile.timeline, 'opening dialogue filled the profile')
         for (const id of order) {
           assert.ok(unlocked(s, locations.find((l) => l.id === id)))
           if (id === 'market') {
@@ -107,6 +109,37 @@ for (const order of [
         variants++
       }
 assert.equal(variants, 72)
+
+/* ---------- the opening asks the profile in dialogue, not on a form ---------- */
+{
+  const goals = nodes.rowan.choices.map((c) => c.set?.goal)
+  assert.deepEqual(goals, ['stability', 'space', 'control'], 'Rowan asks the goal')
+  const times = nodes.purpose.choices.map((c) => c.set?.timeline)
+  assert.deepEqual(times, ['soon', 'later', 'exploring'], 'Rowan asks the timing')
+  assert.equal(nodes.letter.minigame, 'rent-day', 'the landlord scene opens with play')
+  assert.ok(nodes.letter.minigameLabel, 'the opening game is featured, not a footnote')
+  for (const [goal, timeline] of [['stability', 'soon'], ['space', 'later'], ['control', 'exploring']]) {
+    const s2 = initialState()
+    const g = nodes.rowan.choices.find((c) => c.set.goal === goal)
+    choose(s2, g)
+    assert.equal(s2.profile.goal, goal, 'dialogue sets the profile goal')
+    assert.equal(s2.vars.priority, goal)
+    const t = nodes.purpose.choices.find((c) => c.set.timeline === timeline)
+    choose(s2, t)
+    assert.equal(s2.profile.timeline, timeline, 'dialogue sets the profile timing')
+    // The learning plan must still resolve from a dialogue-built profile.
+    assert.ok(learningPlan(s2.profile).tasks.length === 3)
+  }
+  // Answers on action choices (@next and friends) must be recorded without moving the player.
+  for (const c of nodes.purpose.choices) {
+    assert.ok(c.to.startsWith('@'), 'the timing question routes to an action')
+    const s3 = initialState()
+    s3.node = 'purpose'
+    applyChoice(s3, c)
+    assert.equal(s3.profile.timeline, c.set.timeline, 'action choice still records the answer')
+    assert.equal(s3.node, 'purpose', 'applyChoice must not move the player')
+  }
+}
 
 /* ---------- the portal is a bonus, not a gate ---------- */
 {
@@ -250,5 +283,5 @@ assert.equal(restored.lead.plan, true)
 assert.equal(restoreState({ ...JSON.parse(JSON.stringify(s)), avatar: 'javascript:alert(1)' }).avatar, null)
 
 console.log(
-  `Passed: ${variants} full journey variants; all scene links, items, and sources; portal bonus; coin economy; profile plans; save migration v1/v2/v3; Albert's document hunt.`,
+  `Passed: ${variants} full journey variants; all scene links, items, and sources; portal bonus; coin economy; profile plans; save migration v1/v2/v3; Albert's document hunt; dialogue-driven profile.`,
 )
