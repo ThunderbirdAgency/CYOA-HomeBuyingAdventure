@@ -263,3 +263,404 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================ v2.4: the arcade is a room ============================
+   The index used to be five flat cards. It is now a hall with five standing machines in it:
+   marquee, screen, control deck, coin slot. Clicking a machine lifts it, then the machine
+   opens full-screen with the real game running inside its own bezel. */
+
+.arcade-hall {
+  position: relative;
+  min-height: 100vh;
+}
+/* The room itself. Fixed so the cabinets sit in it while the page scrolls past. */
+.hall-art {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: #0d1f1b url(art/hall.webp) center top / cover no-repeat;
+}
+.hall-art::after {
+  /* Sink the room back so the machines and the type stay readable on top of it. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#0d1f1bD1, #0d1f1b73 26%, #0d1f1b8C 64%, #0d1f1bF7);
+}
+.arcade-hall .arcade-top,
+.arcade-hall .arcade-foot {
+  background: #0a1a17d9;
+  backdrop-filter: blur(3px);
+}
+.hall-heading {
+  padding-bottom: 8px;
+}
+
+/* ---------------------------------------------------------------- the row of machines */
+.cabinet-row {
+  display: flex;
+  gap: clamp(10px, 2.2vw, 30px);
+  align-items: flex-end;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 18px clamp(12px, 4vw, 48px) 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.cabinet {
+  width: clamp(150px, 15vw, 210px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+}
+.cab-body {
+  /* The machine. One button, so the whole cabinet is the target and the keyboard reaches it. */
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  padding: 10px 10px 0;
+  border-radius: 16px 16px 5px 5px;
+  background:
+    linear-gradient(#2c4a3f, #1b332c 42%, #16292400 42%),
+    linear-gradient(100deg, #17302a, #24413a 30%, #17302a 62%, #101f1c);
+  border: 1px solid #0a1714;
+  box-shadow:
+    inset 0 1px 0 #4d7566,
+    inset -6px 0 12px -8px #000,
+    0 18px 26px -14px #000c,
+    0 2px 0 #0a1714;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.3, 1), box-shadow 0.22s ease;
+  transform-origin: 50% 100%;
+}
+.cab-body:hover,
+.cab-body:focus-visible {
+  transform: translateY(-10px);
+  box-shadow:
+    inset 0 1px 0 #4d7566,
+    inset -6px 0 12px -8px #000,
+    0 30px 34px -16px #000d,
+    0 0 0 2px #efcc7955,
+    0 2px 0 #0a1714;
+}
+.cab-body:focus-visible {
+  outline: 2px solid #efcc79;
+  outline-offset: 3px;
+}
+
+.cab-marquee {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 6px;
+  border-radius: 8px 8px 3px 3px;
+  background: linear-gradient(#f7e6b4, #e6cd8b 52%, #cfae63);
+  box-shadow: inset 0 -2px 0 #a8873f, 0 0 16px -2px #efcc7966;
+  overflow: hidden;
+}
+.cab-marquee span {
+  font-family: "Press Start 2P", monospace;
+  font-size: 7px;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: #40270d;
+  text-align: center;
+  text-transform: uppercase;
+}
+.cab-screen {
+  position: relative;
+  display: block;
+  margin-top: 8px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #050d0b;
+  box-shadow: inset 0 0 0 3px #0c1a17, inset 0 0 22px 6px #000a, 0 0 22px -6px #7fe3c355;
+  aspect-ratio: 2 / 3;
+}
+.cab-screen img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cab-glare {
+  /* The curve of the glass. */
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(122deg, #ffffff1f 0 22%, #ffffff00 46%);
+  pointer-events: none;
+}
+.cab-scan {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(#0000 0 2px, #00000059 2px 3px);
+  pointer-events: none;
+}
+.cab-attract {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8%;
+  text-align: center;
+  font-family: "Press Start 2P", monospace;
+  font-size: 7px;
+  color: #f6e7bb;
+  text-shadow: 0 0 8px #efcc79, 0 2px 0 #000;
+  animation: cab-blink 1.4s steps(1) infinite;
+}
+@keyframes cab-blink {
+  0%, 55% { opacity: 1; }
+  56%, 100% { opacity: 0; }
+}
+.cab-deck {
+  position: relative;
+  display: block;
+  height: 30px;
+  margin-top: 8px;
+  border-radius: 4px 4px 2px 2px;
+  background: linear-gradient(#33564a, #1d3830);
+  box-shadow: inset 0 1px 0 #5a8574, inset 0 -3px 6px -3px #000;
+}
+.cab-deck .stick {
+  position: absolute;
+  left: 24%;
+  top: 4px;
+  width: 6px;
+  height: 14px;
+  border-radius: 3px;
+  background: #16211f;
+  transform: translateX(-50%);
+}
+.cab-deck .stick::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -7px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle at 35% 30%, #ff8e6e, #b93c2a);
+  box-shadow: 0 1px 2px #000a;
+}
+.cab-deck .knob {
+  position: absolute;
+  top: 9px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  box-shadow: inset 0 -2px 0 #0006, 0 1px 2px #000a;
+}
+.cab-deck .k1 { left: 56%; background: radial-gradient(circle at 35% 30%, #ffe7a6, #d9a83f); }
+.cab-deck .k2 { left: 72%; background: radial-gradient(circle at 35% 30%, #9fe6cd, #3d9c7d); }
+.cab-base {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 7px 10px 9px;
+  margin: 6px -10px 0;
+  border-radius: 0 0 5px 5px;
+  background: linear-gradient(#132723, #0c1c19);
+  box-shadow: inset 0 1px 0 #2d4a41;
+}
+.cab-base .slot {
+  width: 26px;
+  height: 5px;
+  border-radius: 2px;
+  background: #050c0a;
+  box-shadow: inset 0 1px 0 #0000, 0 1px 0 #35564c;
+}
+.cab-base .credit {
+  font-family: "Press Start 2P", monospace;
+  font-size: 6px;
+  color: #7fbfa8;
+  letter-spacing: 0.06em;
+}
+.cab-blurb {
+  margin: 12px 0 4px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #b9cfc6;
+  text-align: center;
+}
+.cab-blurb b {
+  display: block;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 14px;
+  color: #f4ead2;
+  margin-bottom: 3px;
+}
+.cab-perma {
+  font-size: 11px;
+  color: #7fbfa8;
+  text-decoration: none;
+  border-bottom: 1px dotted #7fbfa855;
+}
+.cab-perma:hover { color: #efcc79; }
+
+/* ------------------------------------------------------- the machine you are playing */
+.cab-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(8px, 2vh, 22px);
+  background: #061310f2;
+  backdrop-filter: blur(6px);
+  animation: cab-stage-in 0.28s ease-out both;
+}
+@keyframes cab-stage-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.cab-stage[hidden] { display: none; }
+.cab-open {
+  /* The same machine, grown: marquee on top, the game in the glass, deck underneath. */
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 560px);
+  max-height: 100%;
+  padding: 12px 12px 0;
+  border-radius: 20px 20px 6px 6px;
+  background:
+    linear-gradient(#2c4a3f, #1b332c 30%, #16292400 30%),
+    linear-gradient(100deg, #17302a, #24413a 30%, #17302a 62%, #101f1c);
+  border: 1px solid #0a1714;
+  box-shadow: 0 40px 70px -30px #000, inset 0 1px 0 #4d7566;
+  animation: cab-rise 0.34s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes cab-rise {
+  from { transform: translateY(42px) scale(0.9); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+.cab-open .cab-marquee {
+  height: 44px;
+  border-radius: 10px 10px 4px 4px;
+}
+.cab-open .cab-marquee span { font-size: 11px; }
+.cab-open-screen {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin-top: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #050d0b;
+  box-shadow: inset 0 0 0 3px #0c1a17, inset 0 0 30px 8px #000a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cab-open-screen .arcade { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.cab-open-screen .arcade-frame { max-height: 100%; }
+.cab-open .cab-deck { height: 38px; margin-top: 10px; }
+.cab-open .cab-deck .stick { top: 6px; }
+.cab-open-base {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px 11px;
+  margin: 8px -12px 0;
+  border-radius: 0 0 6px 6px;
+  background: linear-gradient(#132723, #0c1c19);
+  box-shadow: inset 0 1px 0 #2d4a41;
+}
+.cab-open-base button {
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 7px 12px;
+  color: #dff0e8;
+  background: #1d3b33;
+  border: 1px solid #35564c;
+}
+.cab-open-base button:hover { background: #274d42; color: #fff; }
+.cab-open-base .cab-open-lesson {
+  flex: 1;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: #8fb3a6;
+}
+
+/* --------------------------------------------------------------- the room's small print */
+.hall-note {
+  background: #0a1a17cc;
+  border: 1px solid #24413a;
+  border-left: 4px solid #efcc79;
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.hall-note h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #efcc79;
+}
+.hall-note p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #b9cfc6;
+}
+.hall-note p:last-child { margin-bottom: 0; }
+.hall-foot { align-items: start; }
+
+@media (max-width: 900px) {
+  .cabinet { width: clamp(140px, 40vw, 200px); }
+  .cabinet-row { gap: 14px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cab-body, .cab-open, .cab-stage { transition: none; animation: none; }
+  .cab-attract { animation: none; }
+  .cab-body:hover, .cab-body:focus-visible { transform: none; }
+}
+.cab-loading {
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  color: #8fb3a6;
+  font-size: 13px;
+}
+.cab-loading a { color: #efcc79; }
+
+/* The lower body. Without it the machines read as tall tiles rather than furniture standing
+   on a floor: this is the cabinet below the coin door, plus the shadow it casts. */
+.cab-legs {
+  display: block;
+  height: 42px;
+  margin: 0 -10px;
+  border-radius: 0 0 6px 6px;
+  background:
+    linear-gradient(90deg, #0e1f1b 0 6%, #1b332c 6% 82%, #0b1a17 82%),
+    linear-gradient(#16292400, #0a1613);
+  box-shadow: inset 0 8px 12px -10px #000, inset 0 -3px 0 #060f0d;
+  position: relative;
+}
+.cab-legs::after {
+  /* A pool of light on the carpet, so the machine is standing in the room. */
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -13px;
+  width: 122%;
+  height: 22px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #0007, #0000 72%);
+  pointer-events: none;
+}
+.cab-open .cab-legs { display: none; }
+.hall-note-inline {
+  max-width: 1180px;
+  margin: 18px auto 0;
+  padding: 12px 16px;
+}

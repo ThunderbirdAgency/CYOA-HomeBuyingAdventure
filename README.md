@@ -22,7 +22,17 @@ The animated opening is optional and lives under How to play, so nothing stands 
 
 ## Hearthvale Arcade
 
-Five original pixel games live in `dist/arcade/`. Each runs inside the story at the matching location and on its own shareable page with Open Graph images.
+Five original pixel games live in `dist/arcade/`. `/arcade/` is a room: five standing machines
+with lit marquees, screen art, control decks and coin slots, in front of a pixel-art arcade hall.
+Clicking a machine lifts it and opens it full-screen with the real game running inside its own
+bezel — no page load, Escape or the back button returns to the row. Each game also runs inside
+the story at the matching location, and still has its own shareable page with an Open Graph image
+(`/arcade/<game>/`), which is what the machines' "Open its own page" links point at. A machine can
+be linked directly with `/arcade/#play=coin-catch`.
+
+The cabinet art lives in `dist/arcade/art/`: one screen per game plus the hall itself. The same
+screen art is used as the thumbnail in the in-game arcade panel, so a game looks the same
+wherever it is listed.
 
 | Game | Where | Lesson |
 | --- | --- | --- |

@@ -390,6 +390,7 @@ export function mountStandalone(game) {
   const root = document.querySelector('#arcade-root') || document.body
   const partnerLine = config.partner ? `<p class="small">Shared by ${esc(config.partner.name)}</p>` : ''
   root.innerHTML = `<header class="arcade-top"><a class="brand" href="${esc(config.gameUrl)}" aria-label="The First Key"><span class="brandmark">⚿</span><span>THE FIRST KEY<small>HEARTHVALE ARCADE</small></span></a><a class="arcade-all" href="../">All games</a></header>
+    <p class="fiction-note hall-note-inline"><b>Every number in this game is made up</b> — prices, rates, payments and coins. It is a practice game, not a rate quote, not an advertisement of terms, and not an offer or a commitment to lend. Your real figures come on a Loan Estimate after you apply.</p>
     <main class="arcade-page">
       <div class="arcade-stage" id="stage"></div>
       <aside class="arcade-side">
@@ -399,7 +400,7 @@ export function mountStandalone(game) {
         <div class="presenter-card"><img src="${esc(presenter.headshot)}" alt="" width="64" height="64"><div><strong>${esc(presenter.name)}</strong><small>${esc(presenter.role)} · ${esc(presenter.company)}<br>NMLS #${esc(presenter.nmls)} · Licensed in ${esc(presenter.licensedIn)}</small></div></div>
         <div class="utility-actions"><a class="primary" href="${esc(config.gameUrl)}">Play the full adventure →</a><a class="secondary" href="tel:${esc(presenter.phoneHref)}">Call ${esc(presenter.firstName)}</a><a class="secondary" href="sms:${esc(presenter.phoneHref)}">Text ${esc(presenter.firstName)}</a><button type="button" class="secondary" id="share-game">Share this game ↗</button></div>
         ${partnerLine}
-        <p class="small">A fictional practice game with real-world lessons. Not a loan offer. Coins are pretend.</p>
+        <p class="small">${esc(presenter.name)}, ${esc(presenter.role)} · NMLS #${esc(presenter.nmls)} · ${esc(presenter.company)} · Licensed in ${esc(presenter.licensedIn)} · Equal Housing Lender</p>
       </aside>
     </main>
     <footer class="arcade-foot"><span>A CHOICEWRIGHT ORIGINAL ✦ presented by ${esc(presenter.name)}</span><small>${esc(presenter.legal)}</small></footer>`

@@ -82,3 +82,34 @@ While fixing that, the map itself turned out to have been rendering wrong since 
 **The story is now a purchase rather than a tour.** You wake up, get robbed by your landlord, and go outside. From there the town is open. The open house and the realty office are both valid first moves; the listing agent tells you, straight, that he works for the seller, and asks whether you have an agent — lie and he asks which one and whether you signed a buyer-broker agreement, then shows you the door. Dual agency is offered honestly and signed for in writing or not at all. Your agent takes you to the lender, who will not write a letter until you have set a housing number at Mira's and recovered all five documents from the Augusta wind. The letter is what makes an offer credible: at asking with the letter attached it beats an identical offer without one, under asking gets countered and then loses the house, and waiving the inspection wins it and costs you the right to ask. Inspections are chosen and paid for out of the emergency pouch, and what you did not pay to look at is what you find out about later.
 
 Old saves (v1-v3) were a different quest with no agent, no offer and no pre-approval. There is no honest mapping, so they keep the player's character, photo, coins and mini-game records, and the journey starts again.
+
+## v2.4 — the arcade is a room, and the rates say what they are
+
+The arcade index was five flat cards with a glyph on each. It is now a hall: a pixel-art arcade
+room with five standing machines in front of it, each with a lit marquee, real screen art behind
+glass, a control deck, a coin door and a blinking PRESS START. Clicking one lifts it and opens it
+full-screen as the same machine — marquee above, the game running in the glass, deck below — and
+Escape or the back button puts it down again. The games still have their own pages for sharing;
+the cabinet just saves a page load, and `/arcade/#play=<game>` opens one directly.
+
+The art is generated in the same style as the Hearthvale map and lives in `dist/arcade/art/`. The
+per-game screens are reused as thumbnails in the in-game arcade panel, so a machine looks the
+same wherever it appears.
+
+**Rates.** Every interest rate anywhere in this project is either a number the visitor chose on a
+calculator or a number invented for a game. That was true before; it was said too late and too
+quietly. Now:
+
+- every calculator that asks for a rate carries a bordered notice **above** the calculator, not
+  small print under the result: the rate is one you picked, it is not a quote, not an
+  advertisement of terms, not an offer or a commitment to lend; the actual rate and APR depend on
+  credit, program, occupancy, property, loan amount, down payment and the market at lock; the real
+  figures arrive on a Loan Estimate. It carries the licence line and Equal Housing Lender.
+- the arcade hall says the same thing before anyone plays, and every standalone game page repeats
+  it above the game rather than beneath it.
+- the in-game arcade panel says it above the coin numbers, and the down-payment widget at the
+  castle now labels its rate as "a made-up 6.50% 30-year fixed … an illustration, not a rate quote".
+
+The site publishes no rates of its own — "Today's Rates" is a request form, not a rate table — so
+nothing here triggers the advertising rules that attach to stating a rate. If that ever changes,
+the APR has to appear wherever the rate does.

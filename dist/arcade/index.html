@@ -1,22 +1,84 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#102823">
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0d1f1b">
 <title>Hearthvale Arcade · The First Key</title>
-<meta name="description" content="Five short retro games about buying a home: catch coins for your emergency pouch, compare loan offers, hunt inspection problems, and dash for a bigger down payment.">
+<meta name="description" content="Five short retro games about buying a home: keep your rent coins, catch coins for your emergency pouch, compare loan offers, hunt inspection problems, and dash for a bigger down payment.">
 <meta property="og:type" content="website"><meta property="og:title" content="Hearthvale Arcade · five tiny homebuying games"><meta property="og:description" content="Retro arcade games that teach real homebuying lessons. Pretend coins, real ideas. Presented by Erik Miller, Patriot Home Mortgage."><meta property="og:image" content="og/arcade.jpg"><meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="../style.css"><link rel="stylesheet" href="arcade.css">
+<link rel="preload" as="image" href="art/hall.webp">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23102823'/%3E%3Ctext y='29' x='9' font-size='28' fill='%23efcc79'%3E⚿%3C/text%3E%3C/svg%3E">
-</head><body class="arcade-body">
+</head><body class="arcade-body arcade-hall">
+<div class="hall-art" aria-hidden="true"></div>
 <header class="arcade-top"><a class="brand" href="../" aria-label="The First Key"><span class="brandmark">⚿</span><span>THE FIRST KEY<small>HEARTHVALE ARCADE</small></span></a><a class="arcade-all" href="../">Play the full adventure →</a></header>
 <main>
-  <section class="heading" style="padding-bottom:0"><div><div class="eyebrow">FIVE GAMES <span>✦</span> A MINUTE EACH</div><h1>Hearthvale Arcade<span>.</span></h1><p>Pretend coins. Real lessons. Every coin you earn becomes fictional down payment in the full adventure.</p></div></section>
-  <div class="arcade-grid">
-    <a class="arcade-tile" href="rent-day/"><div class="tile-art">⛃</div><h3>Rent Day</h3><p>Your landlord is at the door with a doorknob levy. Keep every coin you can.</p></a>
-    <a class="arcade-tile" href="coin-catch/"><div class="tile-art">◉</div><h3>Coin Catch</h3><p>Catch coins for your emergency pouch. Dodge the impulse buys. Cover the surprise repair.</p></a>
-    <a class="arcade-tile" href="offer-match/"><div class="tile-art">◈</div><h3>Offer Match</h3><p>Two loan scrolls. One is hiding something. Pick the better deal before the timer runs out.</p></a>
-    <a class="arcade-tile" href="inspection-hunt/"><div class="tile-art">⌂</div><h3>Inspection Hunt</h3><p>Seven things are wrong with this house. Find them before the clock does.</p></a>
-    <a class="arcade-tile" href="down-payment-dash/"><div class="tile-art">⚿</div><h3>Down Payment Dash</h3><p>Run, jump, and collect coins toward your down payment. Mind the surprise expenses.</p></a>
+  <section class="heading hall-heading"><div><div class="eyebrow">FIVE MACHINES <span>✦</span> A MINUTE EACH</div><h1>Hearthvale Arcade<span>.</span></h1><p>Pretend coins. Real lessons. Every coin you earn becomes fictional down payment in the full adventure. Pick a machine.</p></div></section>
+
+  <div class="cabinet-row" id="cabinets">
+    <article class="cabinet" data-game="rent-day">
+      <button type="button" class="cab-body">
+        <span class="cab-marquee"><span>RENT DAY</span></span>
+        <span class="cab-screen"><img src="art/rent-day.webp" alt="Bartleby Quill at your door with his ledger, coins falling toward a strongbox" width="600" height="900" loading="lazy" decoding="async"><span class="cab-glare"></span><span class="cab-scan"></span><span class="cab-attract">PRESS START</span></span>
+        <span class="cab-deck"><span class="stick"></span><span class="knob k1"></span><span class="knob k2"></span></span>
+        <span class="cab-base"><span class="slot"></span><span class="credit">1 CREDIT</span></span>
+        <span class="cab-legs"></span>
+      </button>
+      <p class="cab-blurb"><b>Rent Day</b>Your landlord is at the door with a doorknob levy. Keep every coin you can.</p>
+      <a class="cab-perma" href="rent-day/">Open its own page ↗</a>
+    </article>
+
+    <article class="cabinet" data-game="coin-catch">
+      <button type="button" class="cab-body">
+        <span class="cab-marquee"><span>COIN CATCH</span></span>
+        <span class="cab-screen"><img src="art/coin-catch.webp" alt="A coin pouch catching falling gold coins among tempting shop objects" width="600" height="900" loading="lazy" decoding="async"><span class="cab-glare"></span><span class="cab-scan"></span><span class="cab-attract">PRESS START</span></span>
+        <span class="cab-deck"><span class="stick"></span><span class="knob k1"></span><span class="knob k2"></span></span>
+        <span class="cab-base"><span class="slot"></span><span class="credit">1 CREDIT</span></span>
+        <span class="cab-legs"></span>
+      </button>
+      <p class="cab-blurb"><b>Coin Catch</b>Fill your emergency pouch. Dodge the impulse buys. Cover the surprise repair.</p>
+      <a class="cab-perma" href="coin-catch/">Open its own page ↗</a>
+    </article>
+
+    <article class="cabinet" data-game="offer-match">
+      <button type="button" class="cab-body">
+        <span class="cab-marquee"><span>OFFER MATCH</span></span>
+        <span class="cab-screen"><img src="art/offer-match.webp" alt="Two parchment loan scrolls by candlelight with a magnifying glass" width="600" height="900" loading="lazy" decoding="async"><span class="cab-glare"></span><span class="cab-scan"></span><span class="cab-attract">PRESS START</span></span>
+        <span class="cab-deck"><span class="stick"></span><span class="knob k1"></span><span class="knob k2"></span></span>
+        <span class="cab-base"><span class="slot"></span><span class="credit">1 CREDIT</span></span>
+        <span class="cab-legs"></span>
+      </button>
+      <p class="cab-blurb"><b>Offer Match</b>Two loan scrolls. One is hiding something. Pick the better deal before the timer runs out.</p>
+      <a class="cab-perma" href="offer-match/">Open its own page ↗</a>
+    </article>
+
+    <article class="cabinet" data-game="inspection-hunt">
+      <button type="button" class="cab-body">
+        <span class="cab-marquee"><span>INSPECTION HUNT</span></span>
+        <span class="cab-screen"><img src="art/inspection-hunt.webp" alt="A cutaway cottage with a ceiling stain, a leaking pipe and a cracked window" width="600" height="900" loading="lazy" decoding="async"><span class="cab-glare"></span><span class="cab-scan"></span><span class="cab-attract">PRESS START</span></span>
+        <span class="cab-deck"><span class="stick"></span><span class="knob k1"></span><span class="knob k2"></span></span>
+        <span class="cab-base"><span class="slot"></span><span class="credit">1 CREDIT</span></span>
+        <span class="cab-legs"></span>
+      </button>
+      <p class="cab-blurb"><b>Inspection Hunt</b>Seven things are wrong with this house. Find them before the clock does.</p>
+      <a class="cab-perma" href="inspection-hunt/">Open its own page ↗</a>
+    </article>
+
+    <article class="cabinet" data-game="down-payment-dash">
+      <button type="button" class="cab-body">
+        <span class="cab-marquee"><span>DOWN PAYMENT DASH</span></span>
+        <span class="cab-screen"><img src="art/down-payment-dash.webp" alt="An adventurer sprinting along a road toward a castle gate, coins arcing overhead" width="600" height="900" loading="lazy" decoding="async"><span class="cab-glare"></span><span class="cab-scan"></span><span class="cab-attract">PRESS START</span></span>
+        <span class="cab-deck"><span class="stick"></span><span class="knob k1"></span><span class="knob k2"></span></span>
+        <span class="cab-base"><span class="slot"></span><span class="credit">1 CREDIT</span></span>
+        <span class="cab-legs"></span>
+      </button>
+      <p class="cab-blurb"><b>Down Payment Dash</b>Run, jump, and collect coins toward your down payment. Mind the surprise expenses.</p>
+      <a class="cab-perma" href="down-payment-dash/">Open its own page ↗</a>
+    </article>
   </div>
-  <section class="arcade-page" style="padding-top:0"><div></div><aside class="arcade-side" id="presenter"></aside></section>
+
+  <section class="arcade-page hall-foot"><div class="hall-note" id="disclosure"></div><aside class="arcade-side" id="presenter"></aside></section>
 </main>
 <footer class="arcade-foot" id="foot"></footer>
+
+<!-- The cabinet you are playing: built by index.js when a machine is switched on. -->
+<div class="cab-stage" id="cab-stage" hidden></div>
+
 <script type="module" src="index.js"></script>
 </body></html>

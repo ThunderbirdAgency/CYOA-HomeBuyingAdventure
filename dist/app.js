@@ -39,12 +39,13 @@ import { walkable, snapToPath, slide, route } from './paths.js'
 const $ = (s) => document.querySelector(s),
   music = new AdventureAudio(),
   KEY = 'choicewright:first-key:v1'
+// `art` is the cabinet screen from the arcade hall, so a game looks the same wherever it is listed.
 const GAMES = {
-  'rent-day': { title: 'Rent Day', where: 'Your cottage', blurb: 'Catch the coins before Bartleby Quill does.', icon: '⛃' },
-  'coin-catch': { title: 'Coin Catch', where: 'Mira’s shop', blurb: 'Catch coins for the emergency pouch. Dodge the impulse buys.', icon: '◉' },
-  'offer-match': { title: 'Offer Match', where: 'The guild hall', blurb: 'Two loan scrolls. One is hiding something. Pick the better deal.', icon: '◈' },
-  'inspection-hunt': { title: 'Inspection Hunt', where: 'Three-Door Lane', blurb: 'Seven things are wrong with this house. Find them in time.', icon: '⌂' },
-  'down-payment-dash': { title: 'Down Payment Dash', where: 'The lantern bridge', blurb: 'Run, jump, and collect coins toward your down payment.', icon: '⚿' },
+  'rent-day': { title: 'Rent Day', where: 'Your cottage', blurb: 'Catch the coins before Bartleby Quill does.', icon: '⛃', art: 'arcade/art/rent-day.webp' },
+  'coin-catch': { title: 'Coin Catch', where: 'Mira’s shop', blurb: 'Catch coins for the emergency pouch. Dodge the impulse buys.', icon: '◉', art: 'arcade/art/coin-catch.webp' },
+  'offer-match': { title: 'Offer Match', where: 'Erik at the gate', blurb: 'Two loan scrolls. One is hiding something. Pick the better deal.', icon: '◈', art: 'arcade/art/offer-match.webp' },
+  'inspection-hunt': { title: 'Inspection Hunt', where: 'Three-Door Lane', blurb: 'Seven things are wrong with this house. Find them in time.', icon: '⌂', art: 'arcade/art/inspection-hunt.webp' },
+  'down-payment-dash': { title: 'Down Payment Dash', where: 'The Loan Castle', blurb: 'Run, jump, and collect coins toward your down payment.', icon: '⚿', art: 'arcade/art/down-payment-dash.webp' },
 }
 let state = initialState(),
   saved = null,
@@ -910,7 +911,7 @@ function widget(type) {
   if (type === 'downpayment') {
     const base = 300000,
       extra = coinsToDollars(state.coins)
-    return `<div class="numbers three"><div><small>YOUR COIN POUCH</small><strong>◉ ${state.coins}</strong><p class="small">1 coin = $100 fictional down payment</p></div><div><small>EXTRA DOWN PAYMENT</small><strong>${money(extra)}</strong><p class="small">On a fictional ${money(base)} home</p></div><div><small>PAYMENT CHANGE</small><strong>−${money(coinsToMonthlySavings(state.coins))}/mo</strong><p class="small">30-year fixed at ${(config.fictional.rate * 100).toFixed(2)}%, principal &amp; interest only</p></div></div>`
+    return `<div class="numbers three"><div><small>YOUR COIN POUCH</small><strong>◉ ${state.coins}</strong><p class="small">1 coin = $100 fictional down payment</p></div><div><small>EXTRA DOWN PAYMENT</small><strong>${money(extra)}</strong><p class="small">On a fictional ${money(base)} home</p></div><div><small>PAYMENT CHANGE</small><strong>−${money(coinsToMonthlySavings(state.coins))}/mo</strong><p class="small">A made-up ${(config.fictional.rate * 100).toFixed(2)}% 30-year fixed, principal &amp; interest only. An illustration, not a rate quote.</p></div></div>`
   }
   if (type === 'agents')
     return `<div class="agent-list">${agents
@@ -1139,10 +1140,10 @@ function showArcade() {
   destroyArcade()
   utilityView(
     'HEARTHVALE ARCADE',
-    `<h2>Five quick games. Real lessons. Pretend coins.</h2><p>Every coin is $100 of fictional down payment at the gate. Play here any time, or share a game on its own page.</p><div class="arcade-list">${Object.entries(GAMES)
+    `<h2>Five quick games. Real lessons. Pretend coins.</h2><p>Every coin is $100 of fictional down payment at the gate. Play here any time, or share a game on its own page.</p><p class="fiction-note"><b>Everything in these games is made up</b> — prices, rates, payments and coins. Nothing here is a rate quote, an offer, or a commitment to lend.</p><div class="arcade-list">${Object.entries(GAMES)
       .map(([id, g]) => {
         const b = state.minigames[id]
-        return `<div class="arcade-row"><span class="mg-icon">${g.icon}</span><div><strong>${g.title}</strong><small>${g.blurb}</small><small class="muted">${b ? `Best score ${b.score} · ◉ ${b.coins} · ${b.plays} play${b.plays === 1 ? '' : 's'}` : 'Not played yet'}</small></div><div class="arcade-row-actions"><button class="primary" data-play="${id}">Play ▶</button><button class="secondary" data-share="${id}" title="Copy a link to this game">↗</button></div></div>`
+        return `<div class="arcade-row"><span class="mg-art"><img src="${g.art}" alt="" width="600" height="900" loading="lazy"></span><div><strong>${g.title}</strong><small>${g.blurb}</small><small class="muted">${b ? `Best score ${b.score} · ◉ ${b.coins} · ${b.plays} play${b.plays === 1 ? '' : 's'}` : 'Not played yet'}</small></div><div class="arcade-row-actions"><button class="primary" data-play="${id}">Play ▶</button><button class="secondary" data-share="${id}" title="Copy a link to this game">↗</button></div></div>`
       })
       .join('')}</div><div class="numbers"><div><small>COIN POUCH</small><strong>◉ ${state.coins}</strong></div><div><small>FICTIONAL PAYMENT CHANGE</small><strong>−${money(coinsToMonthlySavings(state.coins))}/mo</strong></div></div><p class="small">Games are original and fictional. They practice ideas; they do not predict prices, rates, or approvals. <a href="arcade/" target="_blank" rel="noopener">Open the arcade page ↗</a></p>`,
   )

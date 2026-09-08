@@ -3083,3 +3083,32 @@ footer b {
 .inspect-list div.got {
   border-color: #e7c76a88;
 }
+
+/* The arcade list shows each machine's screen, the same art as the cabinets in the hall. */
+.arcade-row .mg-art {
+  flex: none;
+  width: 46px;
+  height: 62px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: #050d0b;
+  box-shadow: inset 0 0 0 2px #0c1a17, 0 0 14px -6px #7fe3c355;
+}
+.arcade-row .mg-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Said before the numbers, not after them. */
+.fiction-note {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--gold, #efcc79);
+  background: #0e2621;
+  border-radius: 0 8px 8px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #b9cfc6;
+}
+.fiction-note b { color: #f4ead2; }
