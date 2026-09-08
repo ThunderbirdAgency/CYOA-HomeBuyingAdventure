@@ -31,7 +31,7 @@ Coins: path coins are worth 3, each game awards up to 40 (only improvements over
 
 ## Contact forms and analytics
 
-Everything is opt-in and the game never withholds progress if a player declines or delivery fails. Forms post to the erikmillerhlt.com lead API (`/api/lead/`), which forwards to GoHighLevel with the funnel tags `game-plan`, `game-question`, `game-portal`, and `game-episode` plus a `game-lead` tag. Off-site hosts post cross-origin to the same API; override `leadEndpoint` in `window.FIRST_KEY_CONFIG` if needed.
+Everything is opt-in and the game never withholds progress if a player declines or delivery fails. Forms post to the erikmillerhlt.com lead API (`/api/lead/`), which verifies each request with Cloudflare Turnstile, checks the page origin, requires an Arizona ZIP code (Erik is licensed in Arizona only), queues the lead durably, and forwards it to GoHighLevel with the funnel tags `game-plan`, `game-question`, `game-portal`, and `game-episode` plus a `game-lead` tag. Each lead carries a one-line `game_context` summary of the player's fictional choices. When the API is not reachable from the page (any host other than erikmillerhlt.com, or verification not configured), the form is replaced by prefilled text and email links so the player still has a way to reach Erik.
 
 `analytics.js` emits events (`game_start`, `location_enter`, `choice`, `coin_pickup`, `minigame_start`, `minigame_end`, `lead_open`, `lead_submit`, `contact_click`, `game_complete`, `plan_open`, `portal_found`, `portal_open`, `share`, and more) to whatever exists on the host page: `dataLayer`, `gtag`, Vercel `va`, or a first-party beacon endpoint. Add `?debug=1` to log events in the console.
 

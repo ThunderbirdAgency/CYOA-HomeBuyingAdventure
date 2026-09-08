@@ -136,6 +136,8 @@ function vars() {
         ? 'The keeper has your name; the Credit Compass will find you when the series opens.'
         : portalLead === 'skipped'
           ? 'You kept your name to yourself. The stones opened anyway.'
+          : portalLead === 'texted'
+            ? 'Your message to the keeper is waiting in your own app to send. The stones opened anyway.'
           : 'The keeper’s ledger could not be reached just now. The stones opened anyway.',
   }
 }
@@ -740,9 +742,12 @@ async function unlockPortal() {
     title: 'Leave your name and the seal opens.',
     intro: `Optional. ${presenter.firstName} will send the Credit Compass preview when the series opens, and nothing else unless you ask. The portal opens either way.`,
     submit: 'Open the seal',
+    goal: learningPlan(state.profile).goal,
+    timeline: profileOptions.timeline.find(([id]) => id === state.profile.timeline)[1],
+    fallbackIntro: 'I found the Credit Compass portal in The First Key and would like the preview when it opens.',
     context: gameContext('portal'),
   })
-  state.lead.portal = r.skipped ? 'skipped' : r.delivered ? 'delivered' : 'failed'
+  state.lead.portal = r.skipped ? 'skipped' : r.delivered ? 'delivered' : r.fallback ? 'texted' : 'failed'
   state.portal = 'open'
   save()
   update()
@@ -1094,12 +1099,15 @@ function showSeries(focusEpisode) {
         title: 'Be first through the gate.',
         intro: `Leave your name and ${presenter.firstName} will let you know when Episode 2 opens. Nothing else unless you ask.`,
         submit: 'Put me on the list',
+        goal: learningPlan(state.profile).goal,
+        timeline: profileOptions.timeline.find(([id]) => id === state.profile.timeline)[1],
+        fallbackIntro: 'Please tell me when Episode 2 of The First Key opens.',
         context: gameContext('episode2'),
       })
       if (r.ok) {
-        state.lead.episode = r.delivered ? 'delivered' : 'failed'
+        state.lead.episode = r.delivered ? 'delivered' : 'texted'
         save()
-        toast(r.delivered ? 'You’re on the list for Episode 2.' : `We couldn’t send that just now. Text ${presenter.phone} and ${presenter.firstName} will add you.`)
+        toast(r.delivered ? 'You’re on the list for Episode 2.' : `Your message is ready to send to ${presenter.firstName}.`)
         showSeries(2)
       }
     }
@@ -1110,9 +1118,8 @@ $('#series').onclick = () => showSeries()
 /* ---------- share card ---------- */
 async function showCard() {
   utilityView('YOUR ADVENTURER CARD', `<h2>Making your card…</h2><p class="small">Drawn on this device.</p>`)
-  let url = ''
   try {
-    const blob = await shareCard({
+    const { blob, dataUrl } = await shareCard({
       avatar: state.avatar,
       name: state.profile.name,
       headline: `${state.profile.name} earned the First Key`,
@@ -1120,10 +1127,9 @@ async function showCard() {
       footer: `Play at ${presenter.site.replace(/^https?:\/\/(www\.)?/, '')}/play · presented by ${presenter.name}, ${presenter.company}`,
       coins: state.coins,
     })
-    url = URL.createObjectURL(blob)
     utilityView(
       'YOUR ADVENTURER CARD',
-      `<h2>${esc(state.profile.name)}, you look great in pixels.</h2><img class="card-preview" src="${url}" alt="Adventurer card"><div class="utility-actions"><button class="primary" id="card-download">Download ↓</button><button class="secondary" id="card-share">Share ↗</button>${state.avatar ? '' : '<button class="secondary" id="card-photo">Add my photo first</button>'}</div><p class="small">${state.avatar ? 'Your photo was turned into pixels on this device and never uploaded.' : 'Add a photo in My adventurer to put your own face on the card.'}</p>`,
+      `<h2>${esc(state.profile.name)}, you look great in pixels.</h2><img class="card-preview" src="${dataUrl}" alt="Adventurer card"><div class="utility-actions"><button class="primary" id="card-download">Download ↓</button><button class="secondary" id="card-share">Share ↗</button>${state.avatar ? '' : '<button class="secondary" id="card-photo">Add my photo first</button>'}</div><p class="small">${state.avatar ? 'Your photo was turned into pixels on this device and never uploaded.' : 'Add a photo in My adventurer to put your own face on the card.'}</p>`,
     )
     $('#card-download').onclick = () => {
       downloadBlob(blob, 'My-First-Key-Adventurer.png')
@@ -1214,9 +1220,12 @@ $('#bubble-ask').onclick = async () => {
     intro: `Ask anything about buying a home in ${presenter.licensedIn}. ${presenter.firstName} answers personally, usually the same business day.`,
     submit: 'Send my question',
     messageLabel: 'Your question',
+    goal: learningPlan(state.profile).goal,
+    timeline: profileOptions.timeline.find(([id]) => id === state.profile.timeline)[1],
+    fallbackIntro: 'I have a question from The First Key game.',
     context: gameContext('question'),
   })
-  if (r.ok) toast(r.delivered ? `Sent. ${presenter.firstName} will get back to you.` : `We couldn’t send that just now. Text or call ${presenter.phone}.`)
+  if (r.ok) toast(r.delivered ? `Sent. ${presenter.firstName} will get back to you.` : `Your message is ready to send to ${presenter.firstName}.`)
 }
 $('#bubble-plan').onclick = () => {
   bubbleOpen = false
@@ -1232,12 +1241,15 @@ async function sendPlan() {
     intro: `${presenter.firstName} reads your plan (${p.title}) and your game choices before you talk, so the first conversation starts in the middle. No application, no credit pull.`,
     submit: 'Send my plan',
     messageLabel: 'Anything you want to add? (optional)',
+    goal: p.goal,
+    timeline: profileOptions.timeline.find(([id]) => id === state.profile.timeline)[1],
+    fallbackIntro: `I finished The First Key. My plan focus is ${p.title}.`,
     context: gameContext('plan'),
   })
   if (r.ok) {
-    state.lead.plan = r.delivered ? 'delivered' : 'failed'
+    state.lead.plan = r.delivered ? 'delivered' : 'texted'
     save()
-    toast(r.delivered ? `Sent. ${presenter.firstName} will read it before you talk.` : `We couldn’t send that just now. Download your plan and text it to ${presenter.phone}.`)
+    toast(r.delivered ? `Sent. ${presenter.firstName} will read it before you talk.` : `Your plan summary is ready to send to ${presenter.firstName}.`)
     if (utility.open && $('#plan-send')) showPlan()
   }
 }

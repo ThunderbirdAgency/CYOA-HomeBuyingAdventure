@@ -46,16 +46,17 @@ export async function pixelate(source, opts = {}) {
   const size = opts.size || 32,
     scale = opts.scale || 8,
     usePalette = opts.palette !== false
-  let img = source,
-    url = null
+  let img = source
   if (typeof source === 'string') img = await loadImage(source)
   else if (!(source instanceof HTMLImageElement)) {
-    url = URL.createObjectURL(source)
-    try {
-      img = await loadImage(url)
-    } finally {
-      URL.revokeObjectURL(url)
-    }
+    // Read the file as a data URL rather than a blob URL so it works under a strict img-src policy.
+    const dataUrl = await new Promise((resolve, reject) => {
+      const fr = new FileReader()
+      fr.onload = () => resolve(fr.result)
+      fr.onerror = () => reject(new Error('read'))
+      fr.readAsDataURL(source)
+    })
+    img = await loadImage(dataUrl)
   }
   const w = img.naturalWidth || img.width,
     h = img.naturalHeight || img.height
@@ -124,7 +125,7 @@ export function validAvatar(s) {
 
 /**
  * A square share card (1080×1080) with the pixel portrait, a headline, and the presenter line.
- * @returns {Promise<Blob>}
+ * @returns {Promise<{blob: Blob, dataUrl: string}>} the blob for download/share, the data URL for preview
  */
 export async function shareCard({ avatar, name, headline, subline, footer, coins }) {
   const c = document.createElement('canvas')
@@ -177,7 +178,8 @@ export async function shareCard({ avatar, name, headline, subline, footer, coins
   ctx.fillStyle = '#a3b4a8'
   ctx.font = '500 28px "DM Sans", sans-serif'
   ctx.fillText(footer || '', 540, 1030)
-  return new Promise((resolve) => c.toBlob(resolve, 'image/png'))
+  const blob = await new Promise((resolve) => c.toBlob(resolve, 'image/png'))
+  return { blob, dataUrl: c.toDataURL('image/png') }
 }
 
 function wrap(ctx, text, x, y, maxWidth, lineHeight) {
