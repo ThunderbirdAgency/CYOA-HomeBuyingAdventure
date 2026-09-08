@@ -13,8 +13,9 @@ Live at **erikmillerhlt.com/play** (source of truth is this repo; see *Deploying
 5. Collect the Budget Compass, Clear-Sight Lens, and Homeward Map. Each guide offers a bonus arcade game.
 6. Explore a home and work through a repair discovery.
 7. Meet Erik, the lender at the gate, under the Patriot Home Mortgage flag. Your coins become fictional down payment and you see what that does to a monthly payment. Ask about Arizona programs.
-8. Reach the lantern bridge to earn the First Key and unlock Your Buying Plan, which you can send to Erik.
-9. Off the marked paths, a ring of humming stones opens a preview of the Credit Compass side series.
+8. Say hello to Albert, the paperwork wizard, in the castle keep. The Augusta wind blew your paperwork across Hearthvale; Albert knows what a lender needs and where each page landed. Recover all five for the Ready Satchel.
+9. Reach the lantern bridge to earn the First Key and unlock Your Buying Plan, which you can send to Erik.
+10. Off the marked paths, a ring of humming stones opens a preview of the Credit Compass side series.
 
 ## Hearthvale Arcade
 

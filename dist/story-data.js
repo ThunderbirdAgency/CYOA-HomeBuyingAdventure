@@ -170,7 +170,7 @@ export const items = [
     id: 'satchel',
     symbol: '▣',
     title: 'The Ready Satchel',
-    text: 'Albert’s five documents, gathered before anyone asked. Half of pre-approval is having these ready.',
+    text: 'Your five documents, recovered from the Augusta wind and organized by Albert. Half of pre-approval is having these ready.',
     bonus: true,
   },
   {
@@ -198,13 +198,13 @@ export const mapCoins = [
   { id: 'c12', x: 8, y: 30 },
 ]
 
-// Albert's scattered paperwork. Appears after he asks for help; walk over each to collect it.
+// The player's paperwork, scattered by the Augusta wind. Appears once Albert marks the map; walk over each to recover it.
 export const mapDocs = [
-  { id: 'paystub', label: 'Pay stubs', x: 19, y: 57, why: 'Recent pay stubs show current income.' },
-  { id: 'w2', label: 'W-2s', x: 47, y: 38, why: 'Two years of W-2s (or tax returns if self-employed) show income history.' },
-  { id: 'bank', label: 'Bank statements', x: 69, y: 19, why: 'Statements show savings for the down payment, closing costs, and reserves.' },
-  { id: 'photoid', label: 'Photo ID', x: 91, y: 52, why: 'A government ID confirms who is applying.' },
-  { id: 'tax', label: 'Tax returns', x: 41, y: 88, why: 'Returns fill in the income picture, especially for bonuses or self-employment.' },
+  { id: 'paystub', label: 'Your pay stubs', x: 19, y: 57, why: 'Recent pay stubs show current income.' },
+  { id: 'w2', label: 'Your W-2s', x: 47, y: 38, why: 'Two years of W-2s (or tax returns if self-employed) show income history.' },
+  { id: 'bank', label: 'Your bank statements', x: 69, y: 19, why: 'Statements show savings for the down payment, closing costs, and reserves.' },
+  { id: 'photoid', label: 'Your photo ID', x: 91, y: 52, why: 'A government ID confirms who is applying.' },
+  { id: 'tax', label: 'Your tax returns', x: 41, y: 88, why: 'Returns fill in the income picture, especially for bonuses or self-employment.' },
 ]
 
 // A hidden spot on the map. Not a quest location; finding it is its own reward.
@@ -626,31 +626,31 @@ export const episode = {
       choices: [
         c('What programs help buyers in Arizona?', 'arizona', 'Down payment help, VA, FHA, and what to ask.'),
         c('What would you ask me first?', 'lender-questions', 'Three questions, none of them scary.'),
-        c('Say hello to {{assistantFirst}}.', 'albert', 'Erik’s right hand is in the castle keep, sorting papers.'),
+        c('Say hello to {{assistantFirst}}.', 'albert', 'My right hand, the paperwork wizard, is in the castle keep.'),
         c('I’m ready to choose my next step.', 'bridge-choice', 'Back to Rowan and the bridge.'),
       ],
     },
     albert: {
-      speaker: '{{assistantName}} · Erik’s right hand',
+      speaker: '{{assistantName}} · the paperwork wizard',
       symbol: '▣',
       title: 'Welcome to the Loan Castle keep.',
       text: [
-        `Inside the gate tower, past a wall of neatly labeled shelves, someone is sorting a stack of papers with a grin. “You made it! I’m {{assistantName}}. Erik does the lending. I do everything that makes the lending go smoothly, and I answer the phone when it rings at nine at night.”`,
-        `“Everybody who knows Erik knows me. I collect things. Pay stubs, W-2s, bank statements, ID, tax returns. I collect everything except money; the money stays in your pouch.”`,
+        `Inside the gate tower, past a wall of neatly labeled shelves, someone looks up from a perfectly squared stack of folders and grins. “You made it! I’m {{assistantName}}. Erik does the lending. I make sure nothing is missing when it is time to lend, and I answer the phone when it rings at nine at night.”`,
+        `“Everybody who knows Erik knows me. Around here they call me the paperwork wizard: pay stubs, W-2s, bank statements, ID, tax returns. I know what a lender needs before they ask for it. I collect everything except money; the money stays in your pouch.”`,
         `“{{docsStatus}}”`,
       ],
       choices: [
-        c('What exactly do you collect?', 'albert-docs', 'The five documents a lender usually asks for.'),
-        c('Help me gather them.', 'albert-quest', 'A scavenger hunt across Hearthvale.'),
+        c('What does a lender need from me?', 'albert-docs', 'The five documents, and why each one matters.'),
+        c('Help me get my papers back.', 'albert-quest', 'The Augusta wind. Albert saw where everything landed.'),
         c('Back to Erik.', 'lender'),
       ],
     },
     'albert-docs': {
-      speaker: '{{assistantName}} · Erik’s right hand',
+      speaker: '{{assistantName}} · the paperwork wizard',
       symbol: '▣',
       title: 'Five papers, one folder.',
       text: [
-        `{{assistantFirst}} pulls a clean folder off the shelf and labels five tabs. “When you are ready to get pre-approved, these are what a lender usually asks to see. Not today. But the earlier they are in one place, the faster the real conversation goes.”`,
+        `{{assistantFirst}} pulls a clean folder off the shelf and labels five tabs without looking. “When you are ready to get pre-approved, these are what a lender usually asks to see. Not today. But the earlier they are in one place, the faster the real conversation goes, and keeping them in one place is my whole job.”`,
         `“A pre-approval letter is a lender saying, based on what you showed us, here is what we expect to lend. It is not a promise until underwriting finishes, and it does not decide what payment feels comfortable. That part is still yours.”`,
       ],
       widget: 'documents',
@@ -658,28 +658,29 @@ export const episode = {
         'Gather pay stubs, W-2s or tax returns, bank statements, and photo ID before you ask for pre-approval. A preapproval letter is an estimate, not a final approval.',
       source: 'preapproval',
       choices: [
-        c('Help me gather them.', 'albert-quest', 'A scavenger hunt across Hearthvale.'),
+        c('Help me get my papers back.', 'albert-quest', 'The Augusta wind. Albert saw where everything landed.'),
         c('Back to Erik.', 'lender'),
       ],
     },
     'albert-quest': {
-      speaker: '{{assistantName}} · Erik’s right hand',
+      speaker: '{{assistantName}} · the paperwork wizard',
       symbol: '▣',
-      title: 'The great paperwork gust.',
+      title: 'The Augusta wind.',
       text: [
-        `“Here is the thing,” {{assistantFirst}} says, lowering his voice. “A gust came through the keep this morning and my practice folder went everywhere. Five papers, all over Hearthvale. A pay stub by the cottage road, a W-2 near the pond, bank statements up by the tower, a photo ID out on the lane, tax returns down by the farm.”`,
-        `“Walk over each one and it is yours. Bring all five back and I will pack you a satchel that is ready before anyone asks for it. Take your time. I have been chasing paperwork for years; I am very patient.”`,
+        `“Here is the thing,” {{assistantFirst}} says, nodding toward the window. “The Augusta wind came through Hearthvale this morning. It does that every autumn. It blew your cottage window open and I watched your paperwork go sailing over the rooftops: pay stubs, W-2s, bank statements, your photo ID, your tax returns. All five.”`,
+        `“Good news: I was watching. I know where every one of them landed.” He unfolds your map and marks five spots. “A pay stub on the cottage road, a W-2 by the pond, bank statements up near the tower, your ID out on the lane, tax returns down by the farm. Walk over each one and it is yours again. I will keep the tally.”`,
+        `“Bring them back and I will pack you a satchel that is ready before anyone asks for it. Take your time. I have been chasing paperwork for other people for years; I am very good at it.”`,
       ],
-      choices: [c('I’ll find them.', '@close', 'The papers are marked on the map now.')],
+      choices: [c('I’ll go get them.', '@close', 'Your papers are marked on the map now.')],
     },
     'albert-done': {
-      speaker: '{{assistantName}} · Erik’s right hand',
+      speaker: '{{assistantName}} · the paperwork wizard',
       symbol: '▣',
-      title: 'All five. You are officially organized.',
+      title: 'All five. Not a page missing.',
       text: [
-        `{{assistantFirst}} jogs out of the keep to meet you, already holding a folder open. Pay stubs, W-2s, bank statements, photo ID, tax returns, each one slid into its tab. “Do you know how many people show up to a first meeting with none of these? You are ahead of the game, and the game is only ten minutes old.”`,
-        `He hands you a small canvas satchel with a brass clasp and drops a few coins in the outside pocket. “The satchel is for the documents. The coins are because Erik said so. Money still is not my department.”`,
-        `“When it is the real thing, send me a note through Erik and I will tell you exactly which versions of each we need. Pre-approval is a folder and a conversation. You already have the folder.”`,
+        `{{assistantFirst}} meets you at the keep door with a folder already open. Pay stubs, W-2s, bank statements, photo ID, tax returns: he checks each one against his list and slides it into its tab. “That is everything the wind took. Do you know how many people show up to a first meeting with none of these? You are ahead of the game, and the game is only ten minutes old.”`,
+        `He hands you a small canvas satchel with a brass clasp and drops a few coins in the outside pocket. “The satchel is for the documents. Keep them in it, keep them current, and the Augusta wind can do whatever it likes. The coins are because Erik said so. Money still is not my department.”`,
+        `“When it is the real thing, Erik and I will tell you exactly which versions of each we need. Pre-approval is a folder and a conversation. You already have the folder.”`,
       ],
       lesson:
         'Keep your documents in one place and current. When you ask for pre-approval, a good team tells you exactly which versions they need.',
@@ -826,7 +827,7 @@ export const journalLessons = {
   gate: 'I chose a next step I can take outside the adventure.',
   portal: 'I previewed the Credit Compass: read my reports for free, dispute errors in writing, and ignore guaranteed-score promises.',
   albert:
-    'I met Albert and gathered the five documents a lender usually asks for: pay stubs, W-2s, bank statements, photo ID, and tax returns.',
+    'The Augusta wind scattered my paperwork and Albert helped me recover the five documents a lender usually asks for: pay stubs, W-2s, bank statements, photo ID, and tax returns.',
   arizona:
     'I learned that Arizona down payment assistance, VA, and FHA programs exist and that a licensed lender can tell me which apply.',
 }

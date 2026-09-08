@@ -124,10 +124,10 @@ function vars() {
     docsLeft: mapDocs.length - state.docs.length,
     docsStatus:
       state.docQuest === 'complete'
-        ? 'You brought back all five. That satchel is the best-organized thing in Hearthvale.'
+        ? 'You got all five back. That satchel is the best-organized thing in Hearthvale.'
         : state.docQuest === 'active'
-          ? `${mapDocs.length - state.docs.length} of my papers are still out there. Walk over them and they are yours.`
-          : 'Speaking of collecting: I could use a hand with something.',
+          ? `${mapDocs.length - state.docs.length} of your papers are still out there. Walk over them and they are yours again. I am keeping the tally.`
+          : 'Speaking of which: the Augusta wind came through this morning, and I saw some papers fly out of your cottage window. Yours, I think. Want a hand?',
     agentName: partner?.name || 'Nell',
     partnerLine: partner ? ` “${partner.name} and I work together, so when you are ready, we both already know your story.”` : '',
     portalDelivery: !portalLead
@@ -199,9 +199,9 @@ function albertHint() {
   if (!state.started) return 'Create your adventurer and I will point you to the first stop.'
   const next = nextLocation(state, locations, unlocked)
   const coinsLeft = mapCoins.length - state.coinsCollected.length
-  if (state.docQuest === 'active') return `${mapDocs.length - state.docs.length} of my papers are still out on the map. They are the little white sheets.`
+  if (state.docQuest === 'active') return `${mapDocs.length - state.docs.length} of your papers are still out on the map. Look for the little white sheets; I marked where each one landed.`
   if (state.ended && state.portal !== 'open') return 'Finished already? Off the marked paths, near the waterfall, something is humming.'
-  if (state.ended && !state.albertMet) return 'Come find me in the castle keep. Erik will point you in.'
+  if (state.ended && !state.albertMet) return 'Come find me in the castle keep. Erik will point you in. I saw the Augusta wind take something of yours.'
   if (state.ended) return `${coinsLeft ? coinsLeft + ' path coins are still out there, and' : 'Every path coin is found, and'} the arcade always takes another run.`
   if (state.done.includes('homes')) return 'Erik is at the gate, and I am right behind him in the keep. Come say hi.'
   if (next?.id === 'lookout') return 'The tower opens once you have the compass and the lens. Ellis is waiting.'
@@ -219,7 +219,7 @@ function askAlbert() {
     ['Coins', `${mapCoins.length - state.coinsCollected.length} of ${mapCoins.length} path coins are still on the map. Each is 3 coins. The arcade games pay up to 40 each; only a better run than your best adds more.`],
     ['Right now', albertHint()],
   ]
-  if (state.docQuest === 'active') tips.push(['My papers', `Still missing: ${mapDocs.filter((d) => !state.docs.includes(d.id)).map((d) => d.label).join(', ')}.`])
+  if (state.docQuest === 'active') tips.push(['Your papers', `Still out there: ${mapDocs.filter((d) => !state.docs.includes(d.id)).map((d) => d.label.replace(/^Your /, '')).join(', ')}. I marked each landing spot on the map.`])
   if (state.ended) tips.push(['After the key', 'Your buying plan is in the Series panel and the objective bar. You can send it to Erik, or download it and keep it.'])
   utilityView(
     'ASK ALBERT',
@@ -322,7 +322,7 @@ function update() {
   position()
   $('#map-hint').textContent =
     state.docQuest === 'active'
-      ? `Albert’s papers: ${state.docs.length}/${mapDocs.length} found`
+      ? `Your papers: ${state.docs.length}/${mapDocs.length} recovered · Albert is keeping the tally`
       : state.ended
         ? 'Your first key is earned. The arcade and the portal are still open.'
         : `Next: ${next?.name || 'explore the town'}`
@@ -486,7 +486,7 @@ function checkCoins() {
         save()
         update()
         if (state.docQuest === 'complete') {
-          toast('All five documents found! Albert is running over.')
+          toast('All five recovered! Albert has the folder ready.')
           setTimeout(() => {
             state.location = 'gate'
             state.history = []
@@ -962,7 +962,7 @@ const nextSteps = () => learningPlan(state.profile).tasks.map((t) => t.title + '
 function journalText() {
   const lessons = [...state.done.map((id) => locations.find((l) => l.id === id).quest.toUpperCase() + '\n' + journalLessons[id])]
   if (state.visitedArizona) lessons.push('ARIZONA FIELD NOTES\n' + journalLessons.arizona)
-  if (state.docQuest === 'complete') lessons.push('ALBERT’S READY SATCHEL\n' + journalLessons.albert)
+  if (state.docQuest === 'complete') lessons.push('THE READY SATCHEL\n' + journalLessons.albert)
   if (state.portal === 'open') lessons.push('THE CREDIT COMPASS (PREVIEW)\n' + journalLessons.portal)
   return [
     'THE FIRST KEY — MY FIELD JOURNAL',
@@ -1014,7 +1014,7 @@ function downloadJournal() {
 function showJournal() {
   const entries = state.done.map((id) => `<div class="journal-entry"><h3>${locations.find((l) => l.id === id).quest}</h3><p>${journalLessons[id]}</p></div>`)
   if (state.visitedArizona) entries.push(`<div class="journal-entry bonus"><h3>Arizona field notes</h3><p>${journalLessons.arizona}</p></div>`)
-  if (state.docQuest === 'complete') entries.push(`<div class="journal-entry bonus"><h3>Albert’s Ready Satchel</h3><p>${journalLessons.albert}</p></div>`)
+  if (state.docQuest === 'complete') entries.push(`<div class="journal-entry bonus"><h3>The Ready Satchel</h3><p>${journalLessons.albert}</p></div>`)
   if (state.portal === 'open') entries.push(`<div class="journal-entry bonus"><h3>The Credit Compass · preview</h3><p>${journalLessons.portal}</p></div>`)
   utilityView(
     'YOUR FIELD JOURNAL',

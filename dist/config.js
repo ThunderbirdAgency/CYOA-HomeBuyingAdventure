@@ -31,7 +31,7 @@ const defaults = {
     role: 'Senior Support Specialist & Assistant Originator',
     nmls: '1474341',
     headshot: here('assets/albert.png'),
-    line: 'Erik’s right hand. Collects everything except money.',
+    line: 'Erik’s right hand and Hearthvale’s paperwork wizard. Knows what a lender needs before they ask.',
   },
   // Where the optional contact forms post. On erikmillerhlt.com this is the site's own lead API,
   // which forwards to GoHighLevel. Anywhere else, post cross-origin to the same API.
