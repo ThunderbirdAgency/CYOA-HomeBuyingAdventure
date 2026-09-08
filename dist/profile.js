@@ -138,9 +138,3 @@ export function learningPlan(raw) {
     goal: profileOptions.goal.find(([v]) => v === p.goal)[1],
   }
 }
-export function nextLocation(state, locations, unlocked) {
-  const available = locations.filter((l) => !state.done.includes(l.id) && unlocked(state, l))
-  if (state.profile?.question === 'process' && available.some((l) => l.id === 'guild'))
-    return available.find((l) => l.id === 'guild')
-  return available[0] || null
-}

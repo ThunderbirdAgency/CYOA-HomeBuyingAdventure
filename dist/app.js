@@ -11,6 +11,13 @@ import {
   journalLessons,
   initialState,
   unlocked,
+  nextStep,
+  blockedBecause,
+  startFor,
+  choiceVisible,
+  readyForPreapproval,
+  agents,
+  inspectionKinds,
   choose,
   applyChoice,
   enter,
@@ -20,13 +27,14 @@ import {
   recordMinigame,
 } from './story-data.js'
 import { AdventureAudio } from './audio.js'
-import { heroes, profileOptions, cleanProfile, learningPlan, nextLocation } from './profile.js'
+import { heroes, profileOptions, cleanProfile, learningPlan } from './profile.js'
 import { config, presenter, partner, assistant, coinsToDollars, coinsToMonthlySavings } from './config.js'
 import { track, trackOnce } from './analytics.js'
 import { requestLead, contactLinks } from './lead.js'
 import { pixelate, shareCard } from './avatar.js'
 import { narrator } from './voice.js'
 import { spriteSheet, portrait as characterPortrait, faceFromPhoto, CHARACTER_VERSION } from './character.js'
+import { walkable, snapToPath, slide, route } from './paths.js'
 
 const $ = (s) => document.querySelector(s),
   music = new AdventureAudio(),
@@ -55,6 +63,12 @@ try {
   state = restoreState(raw)
   if (state.started) saved = raw
 } catch {}
+// Saves from before the paths existed can put the walker in the middle of the forest.
+{
+  const here = snapToPath(state.player.x, state.player.y)
+  state.player.x = here.x
+  state.player.y = here.y
+}
 let audioPrefs = { music: 60, voice: 80 }
 try {
   const p = JSON.parse(localStorage.getItem(KEY + ':audio'))
@@ -117,6 +131,56 @@ async function buildHeroArt() {
   }
   update()
 }
+/* ---------- the purchase: prices, letters, inspectors ---------- */
+// Fictional throughout. The two homes match the payments Mira compares at the market.
+const HOME_PRICES = { willow: 260000, lantern: 340000 }
+const RESOLUTION_LINES = {
+  negotiate: 'You paid somebody to look, they found one specific thing, and you asked for one specific thing. That is the whole technique.',
+  'self-fund': 'You knew what the repair would cost you before you agreed to it, which is a different thing entirely from finding out afterwards.',
+  'step-back': 'You used the window you paid for, and you walked. That is not a failed purchase. That is the contingency doing its job.',
+  prepare: 'You looked at the number, decided the timing was wrong, and said so out loud. That is a real answer and it costs nothing to give.',
+  default: 'You did the boring parts in the right order, which is the only trick there is.',
+}
+const askingPrice = () => HOME_PRICES[state.vars.home] || HOME_PRICES.lantern
+// A ceiling derived from the housing budget the player chose, not a promise. Fictional.
+const preapprovalAmount = () => (Number(state.vars.housing) >= 3000 ? 390000 : 280000)
+function myAgent() {
+  return agents.find((a) => a.id === state.agent) || { id: null, name: 'Your agent' }
+}
+function preapprovalChecklist() {
+  const need = []
+  if (!state.done.includes('market')) need.push('a housing number you have actually thought about — that is Mira, at the provisioner’s shop')
+  if (state.docQuest !== 'complete')
+    need.push(
+      state.docQuest === 'active'
+        ? `your last ${mapDocs.length - state.docs.length} documents, which are still out there somewhere in the wind`
+        : 'your five documents, which the Augusta wind took out of your window this morning — ask Albert, he watched them go',
+    )
+  if (!need.length) return 'Both boxes are ticked. Let’s write it.'
+  return 'Still missing: ' + need.join('. And ') + '.'
+}
+function inspectionFindings() {
+  if (!state.inspections.length)
+    return 'You did not send anyone in, so there is nothing to read. The house is exactly as unknown as it was on the day you offered on it.'
+  const found = []
+  if (state.inspections.includes('home'))
+    found.push('The general inspector fills eleven pages, most of it ordinary, and puts a photograph of a dark patch on the upstairs ceiling on page four. “Active moisture. Recommend a roofing contractor.”')
+  if (state.inspections.includes('roof'))
+    found.push(`The roofer goes up with a ladder and comes down with a number: $3,000 to fix the flashing where the valley meets the wall, and about six years left in the rest of it.${state.inspections.includes('home') ? ' Which is exactly what page four was pointing at.' : ' You would never have known to ask.'}`)
+  if (state.inspections.includes('sewer'))
+    found.push('The sewer scope goes forty feet and finds clay pipe, some root intrusion, and nothing urgent. $250 to be told a thing is fine is $250 well spent; you only resent it when it is.')
+  if (state.inspections.includes('termite'))
+    found.push('The pest report comes back clean apart from some old, treated damage in the garage frame. Noted, photographed, not a problem.')
+  return found.join(' ')
+}
+function inspectionMissed() {
+  const roofKnown = state.inspections.includes('home') || state.inspections.includes('roof')
+  const skipped = inspectionKinds.filter((k) => !state.inspections.includes(k.id))
+  if (!roofKnown)
+    return 'Nobody looked at the roof. There is a dark patch on the upstairs ceiling that you will meet in about four months, and it will cost $3,000 whether you knew about it now or not. The difference is that today you could have asked the seller.'
+  if (!skipped.length) return 'You paid for all four and know everything a person can know about this house before owning it. That cost you ' + money(state.inspectionSpend) + '.'
+  return `You did not order: ${skipped.map((k) => k.name.toLowerCase()).join(', ')}. That is a choice, not a mistake — but it is the list of things you have decided to find out about later.`
+}
 function vars() {
   const v = state.vars,
     p = state.profile,
@@ -131,11 +195,52 @@ function vars() {
     questionText: profileOptions.question.find(([id]) => id === p.question)[1].toLowerCase(),
     timelineText: profileOptions.timeline.find(([id]) => id === p.timeline)[1].toLowerCase(),
     focusText: plan.title.toLowerCase(),
-    firstStop: p.question === 'process' ? 'visit Sage at the guides’ guild' : 'visit Mira at the provisioner’s shop',
+
     reserve: money(v.reserve),
     margin: money(margin),
     afterRepair: money(v.reserve - 3000),
     homeName: v.home === 'willow' ? 'Willow Cottage' : 'Lantern House',
+    askingPrice: money(askingPrice()),
+    underPrice: money(askingPrice() - 12000),
+    otherHomeName: state.vars.home === 'willow' ? 'Lantern House' : 'Willow Cottage',
+    preapprovalAmount: money(preapprovalAmount()),
+    myAgent: myAgent().name,
+    myAgentFirst: myAgent().name.split(' ')[0],
+    questHint: nextStep(state).hint,
+    signedHint: state.agent
+      ? `You do have one, of course — ${myAgent().name} — but Percival had no way of knowing that, and neither did you when you answered.`
+      : 'Hearthvale Realty is the building with all the maps in the window.',
+    percivalStatus: state.agent === 'percival'
+      ? 'You have already signed with him, as it happens. Both sides, in writing. He will not have hidden that from you; he never does.'
+      : state.done.includes('homes')
+        ? 'You have met him. If you want him for yourself, go back to the lane and say so.'
+        : 'You have not met him yet. He is holding the door at Lantern House this afternoon.',
+    preapprovalStatus: state.preapproved
+      ? 'You have your letter. Go and write an offer with it — that is what it is for.'
+      : readyForPreapproval(state)
+        ? 'Your budget is set and your papers are in one place. This is going to take about four minutes.'
+        : 'We will need two things from you first, and neither of them is frightening.',
+    preapprovalChecklist: preapprovalChecklist(),
+    preapprovalHeadline: readyForPreapproval(state)
+      ? 'Pre-approved, in writing, up to ' + money(preapprovalAmount()) + '.'
+      : 'Not yet. Here is what is missing.',
+    preapprovalBody: readyForPreapproval(state)
+      ? `${presenter.firstName} runs the numbers off your documents and the housing budget you set at Mira's: ${money(state.vars.housing)} a month, all in. “On this fictional math, I would write your letter at ${money(preapprovalAmount())}. That is a ceiling, not a target. Plenty of people borrow less than their letter and sleep better for it.”`
+      : preapprovalChecklist(),
+    offerHint: state.dualAgency
+      ? 'Worth remembering that Percival is writing this for you and holding the other end of it for the seller.'
+      : 'Whatever you write, I am arguing for your side of it and nobody else’s.',
+    inspectionStatus: state.inspections.length
+      ? `Booked so far: ${state.inspections.map((id) => inspectionKinds.find((k) => k.id === id).name).join(', ')} · ${money(state.inspectionSpend)} spent.`
+      : 'Nothing booked yet. Order what you want to know about.',
+    inspectionFindings: inspectionFindings(),
+    inspectionMissed: inspectionMissed(),
+    resolutionLine: RESOLUTION_LINES[v.resolution] || RESOLUTION_LINES.default,
+    inspectionSummary: v.waived
+      ? 'You waived the inspection to win the house, which is a real choice a lot of buyers make and the one thing in the pile you cannot undo.'
+      : state.inspections.length
+        ? `You paid ${money(state.inspectionSpend)} to find out what was wrong with it before you owned it, which is the cheapest money in this whole story.`
+        : 'You got there without sending anybody in to look, which is the part worth doing differently next time.',
     reserveResult:
       v.reserve < 3000
         ? 'The pouch cannot cover this repair. You would need a different, workable plan before proceeding.'
@@ -229,16 +334,14 @@ async function preparePresenter() {
 /* ---------- Albert: in-game support ---------- */
 function albertHint() {
   if (!state.started) return 'Create your adventurer and I will point you to the first stop.'
-  const next = nextLocation(state, locations, unlocked)
+  const step = nextStep(state)
   const coinsLeft = mapCoins.length - state.coinsCollected.length
   if (state.docQuest === 'active') return `${mapDocs.length - state.docs.length} of your papers are still out on the map. Look for the little white sheets; I marked where each one landed.`
   if (state.ended && state.portal !== 'open') return 'Finished already? Off the marked paths, near the waterfall, something is humming.'
-  if (state.ended && !state.albertMet) return 'Come find me in the castle keep. Erik will point you in. I saw the Augusta wind take something of yours.'
   if (state.ended) return `${coinsLeft ? coinsLeft + ' path coins are still out there, and' : 'Every path coin is found, and'} the arcade always takes another run.`
-  if (state.done.includes('homes')) return 'Erik is at the gate, and I am right behind him in the keep. Come say hi.'
-  if (next?.id === 'lookout') return 'The tower opens once you have the compass and the lens. Ellis is waiting.'
   if (coinsLeft > 8 && state.done.length > 1) return 'Walk the paths instead of jumping straight to a place. There are coins on them.'
-  return next ? `Next stop: ${next.name}. Press E or tap ● when you are close.` : 'You are doing great. Keep going.'
+  const loc = step.id && locations.find((l) => l.id === step.id)
+  return loc ? `${step.hint} That is ${loc.name}. Press E or tap ● when you are close.` : step.hint
 }
 function renderAlbert() {
   $('#albert-face').src = albertPixel
@@ -274,15 +377,14 @@ function update() {
     total = locations.length
   $('#progress').style.width = (n / total) * 100 + '%'
   $('#progress-label').textContent = `YOUR JOURNEY · ${n} OF ${total}`
-  const next = nextLocation(state, locations, unlocked)
+  const step = nextStep(state)
+  const next = step.id ? locations.find((l) => l.id === step.id) : null
   $('#quest-intro').textContent = state.ended
     ? 'First quest complete! Your buying plan is unlocked.'
-    : 'Collect the compass, lens, and map. Face your house decision. Reach the bridge to win this first quest.'
+    : 'Get an agent who works for you, a budget you can live with, and a letter that proves it. Then go and buy a house.'
   $('#objective-text').textContent = state.ended
     ? 'You earned your First Key. Continue with your own buying plan, or keep filling your coin pouch in the arcade.'
-    : next
-      ? 'Next: ' + next.quest + '. ' + (state.inventory.filter((i) => ['compass', 'lens', 'map'].includes(i)).length < 3 ? `${Math.min(state.inventory.length, 3)}/3 tools collected.` : 'Your three tools are ready.')
-      : 'Follow the highlighted path to the bridge.'
+    : step.hint
   $('#next-destination').textContent = state.ended ? 'Open my buying plan →' : next ? 'Go to ' + next.name + ' →' : 'Show me the way →'
   $('#player-label').textContent = state.profile.complete ? state.profile.name.toUpperCase() + '’S QUEST' : 'YOUR ADVENTURE'
   const token = $('#hero-token')
@@ -391,6 +493,7 @@ let target = null,
   vx = 0,
   vy = 0,
   steering = null, // {x, y} map percent the pointer is holding the walker toward
+  waypoints = [], // the rest of the route, once the current target is reached
   frameClock = 0,
   walkFrame = 0
 try {
@@ -449,12 +552,14 @@ function step(ts) {
     target = null
     onArrive = null
     steering = null
+    waypoints = []
   } else if (steering) {
     dx = steering.x - state.player.x
     dy = steering.y - state.player.y
     if (pixelDist(dx, dy) < 1.6) dx = dy = 0 // stand still under the cursor
     target = null
     onArrive = null
+    waypoints = []
   } else if (target) {
     dx = target.x - state.player.x
     dy = target.y - state.player.y
@@ -463,6 +568,14 @@ function step(ts) {
     if (d < Math.max(0.9, SPEED * dt)) {
       state.player.x = target.x
       state.player.y = target.y
+      // A route is a handful of waypoints along the roads; take the next leg without stopping.
+      if (waypoints.length) {
+        target = waypoints.shift()
+        position()
+        checkCoins()
+        rafId = requestAnimationFrame(step)
+        return
+      }
       const cb = onArrive
       target = null
       onArrive = null
@@ -473,7 +586,7 @@ function step(ts) {
       cb?.()
       return
     }
-    arriving = d < 6 // ease into the destination instead of stopping dead
+    arriving = !waypoints.length && d < 6 // ease into the destination, not into every corner
   }
   // Normalise in pixel space so the walker travels a straight line at an even speed,
   // then convert the velocity back into map percent for each axis.
@@ -489,8 +602,21 @@ function step(ts) {
     vx = vy = 0
     return stopLoop()
   }
-  state.player.x = Math.max(3, Math.min(97, state.player.x + (vx / ASPECT) * dt))
-  state.player.y = Math.max(5, Math.min(93, state.player.y + vy * dt))
+  // Stay on the roads. When the straight step is blocked, slide along whichever axis is clear,
+  // so walking into the edge of a path follows it instead of sticking to it.
+  const stepX = (vx / ASPECT) * dt
+  const stepY = vy * dt
+  const next = slide(state.player.x, state.player.y, stepX, stepY)
+  if (next.x === state.player.x && stepX) vx = 0
+  if (next.y === state.player.y && stepY) vy = 0
+  if (next.hit && next.x === state.player.x && next.y === state.player.y && target) {
+    // Following a route and wedged in a corner: step back onto the nearest path rather than stall.
+    const free = snapToPath(state.player.x + stepX, state.player.y + stepY)
+    next.x = free.x
+    next.y = free.y
+  }
+  state.player.x = Math.max(3, Math.min(97, next.x))
+  state.player.y = Math.max(5, Math.min(93, next.y))
   if (Math.abs(vx) > 0.6) state.player.facing = vx < 0 ? -1 : 1
   // Walk animation runs off distance travelled, so the legs match the speed.
   const moved = Math.hypot(vx, vy) * dt
@@ -525,9 +651,16 @@ function puff() {
   layer.appendChild(d)
   setTimeout(() => d.remove(), 600)
 }
+/**
+ * Walk to a point by road. The route is a few waypoints along the path network, so tapping a
+ * far corner of the map sends the walker around the pond rather than into it; a tap on
+ * somewhere unwalkable heads for the nearest piece of path instead.
+ */
 function walkTo(x, y, cb) {
   if (!state.started) return
-  target = { x: Math.max(3, Math.min(97, x)), y: Math.max(5, Math.min(93, y)) }
+  const legs = route(state.player.x, state.player.y, x, y)
+  waypoints = legs.length ? legs.slice() : [snapToPath(x, y)]
+  target = waypoints.shift()
   onArrive = cb || null
   startLoop()
 }
@@ -635,23 +768,22 @@ function enterNearby() {
 function travel(id) {
   if (!state.started) return
   const loc = locations.find((l) => l.id === id)
-  if (!unlocked(state, loc)) {
-    toast('First: ' + loc.requires.filter((r) => !state.done.includes(r)).map((r) => locations.find((l) => l.id === r).name).join(' and '))
-    return
-  }
+  if (!unlocked(state, loc)) return void toast(blockedBecause(state, loc))
   $('#map-hint').textContent = 'Walking to ' + loc.name + '…'
-  walkTo(loc.x + 2, loc.y + 6, () => {
+  walkTo(loc.x, loc.y, () => {
     state.location = id
     state.history = []
     music.effect()
     track('location_enter', { location: id })
-    renderNode(loc.start)
+    // Every place is a room you can walk back into, so the door picks the scene that matches
+    // how far the purchase has got: an open house becomes an offer becomes an inspection.
+    renderNode(startFor(state, loc))
   })
 }
 function approachSecret(id) {
   const s = secretSpots.find((x) => x.id === id)
   if (!s) return
-  walkTo(s.x + 3, s.y + 5, () => {
+  walkTo(s.x, s.y, () => {
     state.location = 'secret'
     state.history = []
     if (state.portal === 'hidden') state.portal = 'found'
@@ -780,11 +912,32 @@ function widget(type) {
       extra = coinsToDollars(state.coins)
     return `<div class="numbers three"><div><small>YOUR COIN POUCH</small><strong>◉ ${state.coins}</strong><p class="small">1 coin = $100 fictional down payment</p></div><div><small>EXTRA DOWN PAYMENT</small><strong>${money(extra)}</strong><p class="small">On a fictional ${money(base)} home</p></div><div><small>PAYMENT CHANGE</small><strong>−${money(coinsToMonthlySavings(state.coins))}/mo</strong><p class="small">30-year fixed at ${(config.fictional.rate * 100).toFixed(2)}%, principal &amp; interest only</p></div></div>`
   }
+  if (type === 'agents')
+    return `<div class="agent-list">${agents
+      .map(
+        (a) =>
+          `<div class="${state.agent === a.id ? 'mine' : ''}"><b>${esc(a.name)}</b><span>${esc(a.tag)}</span><p>${esc(a.line)}</p></div>`,
+      )
+      .join('')}</div><p class="small">Interviewing an agent costs nothing. Ask all three the same questions and see who answers them.</p>`
+  if (type === 'inspections')
+    return `<div class="doc-list inspect-list">${inspectionKinds
+      .map(
+        (k) =>
+          `<div class="${state.inspections.includes(k.id) ? 'got' : ''}"><span class="doc-mark">${state.inspections.includes(k.id) ? '✓' : '◇'}</span><div><b>${esc(k.name)} · ${money(k.cost)}</b><small>${esc(k.finds)}</small></div></div>`,
+      )
+      .join('')}</div><div class="numbers"><div><small>POUCH AFTER INSPECTIONS</small><strong>${money(state.vars.reserve)}</strong></div><div><small>SPENT ON LOOKING</small><strong>${money(state.inspectionSpend)}</strong></div></div>`
+  if (type === 'offer')
+    return `<div class="numbers three"><div><small>${esc(state.vars.home === 'willow' ? 'WILLOW COTTAGE' : 'LANTERN HOUSE')} · ASKING</small><strong>${money(askingPrice())}</strong><p class="small">Fictional listing price</p></div><div><small>YOUR LETTER SAYS</small><strong>${money(preapprovalAmount())}</strong><p class="small">A ceiling, not a target</p></div><div><small>YOUR HOUSING BUDGET</small><strong>${money(state.vars.housing)}/mo</strong><p class="small">All in, the way you set it at Mira’s</p></div></div>`
   if (type === 'documents')
     return `<div class="doc-list">${mapDocs.map((d) => `<div class="${state.docs.includes(d.id) ? 'got' : ''}"><span class="doc-mark">${state.docs.includes(d.id) ? '✓' : '▣'}</span><div><b>${esc(d.label)}</b><small>${esc(d.why)}</small></div></div>`).join('')}</div>`
   if (type === 'arizona')
     return `<div class="az-notes"><div><b>Home Plus</b><span>Arizona IDA · statewide</span><p>Up to 4% down payment and closing cost assistance.</p><a href="${sources.homePlus.url}" target="_blank" rel="noopener noreferrer">homeplusaz.com ↗</a></div><div><b>Home in Five Advantage</b><span>Maricopa County</span><p>Up to 5% assistance, plus 1% more for eligible buyers.</p><a href="${sources.homeInFive.url}" target="_blank" rel="noopener noreferrer">homein5.org ↗</a></div><div><b>VA-backed loans</b><span>Veterans, service members, survivors</span><p>Most buy with no down payment. A funding fee applies.</p><a href="${sources.va.url}" target="_blank" rel="noopener noreferrer">va.gov ↗</a></div><div><b>FHA loans</b><span>Lower down payment</span><p>Available to buyers with lower credit scores; mortgage insurance applies.</p><a href="${sources.loanTypes.url}" target="_blank" rel="noopener noreferrer">CFPB loan options ↗</a></div></div><p class="small">Program terms change and each has income, purchase-price, and education requirements. ${esc(presenter.name)} is licensed in ${esc(presenter.licensedIn)} and can confirm what applies to you.</p>`
   return ''
+}
+// Scenes may carry choices that only apply at a certain point in the purchase. Render and
+// dispatch both go through this, so the numbers the player sees are the numbers act() uses.
+function visibleChoices(node) {
+  return node.choices.filter((c) => choiceVisible(state, c))
 }
 function speakerPortrait(node) {
   const s = node.speaker || ''
@@ -808,7 +961,7 @@ function renderNode(id) {
   if (state.inventory.length > oldItems) music.effect(node.ending ? 'finish' : 'reward')
   if (state.coins > oldCoins) toast(`+${state.coins - oldCoins} coins`)
   if (node.ending) trackOnce('game_complete', { coins: state.coins, nextStep: state.vars.nextStep })
-  music.mood = ['inspection', 'self-fund'].includes(id) ? 'tense' : id.startsWith('portal') || id.startsWith('ledger') ? 'mystic' : 'explore'
+  music.mood = ['inspect-report', 'self-fund', 'offer-lost', 'offer-blind', 'oh-signed'].includes(id) ? 'tense' : id.startsWith('portal') || id.startsWith('ledger') ? 'mystic' : 'explore'
   save()
   update()
   track('scene', { node: id })
@@ -821,7 +974,7 @@ function renderNode(id) {
       game
         ? `<button class="minigame-launch ${node.minigameLabel ? 'feature' : ''}" data-game="${node.minigame}"><span class="mg-icon">${game.icon}</span><span><strong>${node.minigameLabel || 'Bonus game: ' + game.title}</strong><small>${node.minigameBlurb || game.blurb}${best ? ` · Best ◉ ${best.coins}` : ' · Earn coins for your pouch'}</small></span><span>▶</span></button>`
         : ''
-    }<div class="choices">${node.choices.map((c, i) => `<button class="choice" data-choice="${i}"><span>${i + 1}</span><div><strong>${interpolate(c.label)}</strong>${c.detail ? `<small>${interpolate(c.detail)}</small>` : ''}</div><span>→</span></button>`).join('')}</div></div>`
+    }<div class="choices">${visibleChoices(node).map((c, i) => `<button class="choice" data-choice="${i}"><span>${i + 1}</span><div><strong>${interpolate(c.label)}</strong>${c.detail ? `<small>${interpolate(c.detail)}</small>` : ''}</div><span>→</span></button>`).join('')}</div></div>`
   $('#story-body').scrollTop = 0
   $('#back-scene').disabled = !state.history.length
   $('#scene-count').textContent = `${state.done.length}/${locations.length} places · ◉ ${state.coins}`
@@ -837,7 +990,7 @@ function renderNode(id) {
 }
 async function act(i) {
   const node = episode.nodes[state.node],
-    c = node.choices[i]
+    c = visibleChoices(node)[i]
   if (!c) return
   state.history.push(JSON.stringify({ ...state, history: [], avatar: null }))
   if (state.history.length > 30) state.history.shift()
@@ -1205,7 +1358,7 @@ function showJournal() {
         utility.close()
         update()
         track('restart')
-        renderNode('letter')
+        renderNode('wake')
       }
       $('#cancel-restart').onclick = showJournal
     }
@@ -1327,7 +1480,7 @@ try {
 function bubbleLine() {
   if (!state.started) return `Hi, I’m ${presenter.firstName}. I’m the only real person in Hearthvale.`
   if (state.ended) return 'Nice work on that key. Want me to read your plan before we talk?'
-  if (state.node === 'lender' || state.node === 'arizona') return 'The flag on the gate is mine. Ask me anything, and say hi to Albert in the keep.'
+  if (state.node === 'castle' || state.node === 'arizona' || state.node.startsWith('preapproval')) return 'The flag on the gate is mine. Ask me anything, and say hi to Albert in the keep.'
   if (state.done.includes('homes')) return 'Roof leak, huh? Come see me at the gate.'
   if (state.done.includes('market')) return 'Good pouch. Keep it separate from the down payment.'
   return 'Stuck on the numbers? I’m the lender at the gate.'
@@ -1468,9 +1621,9 @@ setInterval(() => {
 function goNext() {
   if (!state.started) return showSetup(false)
   if (state.ended) return showPlan()
-  const next = nextLocation(state, locations, unlocked)
-  if (next) travel(next.id)
-  else toast('Open your field journal to see your progress.')
+  const step = nextStep(state)
+  if (step.id) travel(step.id)
+  else toast(step.hint)
 }
 $('#next-destination').onclick = goNext
 function howToPlay() {
@@ -1620,7 +1773,7 @@ function renderSetup() {
     save()
     update()
     track('prologue_skipped_by_default')
-    renderNode(saved ? state.node : 'letter')
+    renderNode(saved ? state.node : 'wake')
   }
 }
 $('#setup').addEventListener('cancel', (e) => {
@@ -1684,7 +1837,7 @@ function finishPrologue() {
   save()
   update()
   track('prologue_done')
-  renderNode(saved ? state.node : 'letter')
+  renderNode(saved ? state.node : 'wake')
 }
 $('#prologue').addEventListener('cancel', (e) => {
   e.preventDefault()

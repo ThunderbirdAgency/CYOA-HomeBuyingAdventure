@@ -68,3 +68,17 @@ Static, no build step, ES modules from `dist/`. `story-data.js` holds authored c
 - Agent co-branding: an agent’s name and pixel portrait as Nell, Erik as the lender, both credited at the end and on the share card.
 - Spanish text layer.
 - Episode 2, The Pre-Approval Scroll.
+
+## v2.3 — the purchase, and the roads
+
+Two defects and one structural change.
+
+**The photo never reached the character.** `state.avatar` is a data URL, but `resolveFace()` passed it straight to the canvas painter, which reads `naturalWidth`, got `undefined`, and skipped the face without a word. Every player who uploaded a photo got the generic adventurer and no error. `resolveFace()` now loads strings and blobs into an image first; canvases and `<img>` elements still pass through untouched. The same bug silenced the setup preview, which is why nobody caught it by looking.
+
+**You could walk anywhere, including over the castle.** There was no collision at all — movement was clamped to a rectangle. The town is a painting rather than a tile map, so the walkable area is now derived from the painting: the dirt roads are the only warm mid-saturation colour in the picture, and a short list of roof rectangles clips the tops of the six buildings, which are drawn in three-quarter view with their doors at the bottom. `scripts/build-paths.py` regenerates the 192 x 128 bitmap from the art and refuses to emit one where any of the six places is unreachable. Walking slides along the edge of a road instead of sticking to it; tapping a far corner routes around the pond rather than into it.
+
+While fixing that, the map itself turned out to have been rendering wrong since the camera layer was added: the CSS sized the map image with `.world > img`, and the image had stopped being a direct child, so it rendered at its natural 1536 x 1024 inside a 944-pixel box. The page showed the top-left corner of Hearthvale and every pin sat somewhere other than the place it named. One selector.
+
+**The story is now a purchase rather than a tour.** You wake up, get robbed by your landlord, and go outside. From there the town is open. The open house and the realty office are both valid first moves; the listing agent tells you, straight, that he works for the seller, and asks whether you have an agent — lie and he asks which one and whether you signed a buyer-broker agreement, then shows you the door. Dual agency is offered honestly and signed for in writing or not at all. Your agent takes you to the lender, who will not write a letter until you have set a housing number at Mira's and recovered all five documents from the Augusta wind. The letter is what makes an offer credible: at asking with the letter attached it beats an identical offer without one, under asking gets countered and then loses the house, and waiving the inspection wins it and costs you the right to ask. Inspections are chosen and paid for out of the emergency pouch, and what you did not pay to look at is what you find out about later.
+
+Old saves (v1-v3) were a different quest with no agent, no offer and no pre-approval. There is no honest mapping, so they keep the player's character, photo, coins and mini-game records, and the journey starts again.

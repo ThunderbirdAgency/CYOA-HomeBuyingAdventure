@@ -24,7 +24,7 @@
 //   P  paper / eye white    p  paper shadow    W  brass         w  brass shadow
 //   *  lantern glow
 
-export const CHARACTER_VERSION = 'char-2026-09-08.1'
+export const CHARACTER_VERSION = 'char-2026-09-08.2'
 
 /* ------------------------------------------------------------------ geometry */
 
@@ -968,7 +968,11 @@ export async function faceFromPhoto(source, opts = {}) {
 
 async function resolveFace(opts) {
   if (!opts.face && !opts.photo) return null
-  if (opts.face) return opts.face
+  // `face` is an already-cropped face: a canvas straight from faceFromPhoto(), or — far more
+  // often — the data URL we saved to storage and reload on every visit. It has to become a
+  // drawable before paintFace() sees it, otherwise that reads naturalWidth off a string, gets
+  // undefined, and skips the face without a word. toImage() passes canvases and images through.
+  if (opts.face) return toImage(opts.face)
   const { canvas } = await faceFromPhoto(opts.photo, opts.faceOptions || {})
   return canvas
 }

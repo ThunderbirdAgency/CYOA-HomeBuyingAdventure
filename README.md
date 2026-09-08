@@ -1,21 +1,22 @@
 # The First Key
 
-An original Choicewright homebuying adventure set in Hearthvale, presented by Erik Miller of Patriot Home Mortgage. The opening quest is a roughly ten-minute introduction to a longer journey. Version 2.0 adds the Hearthvale Arcade, a coin economy, free walking, a photo-to-pixel avatar, Erik as a character at the castle gate, Arizona field notes, a hidden Credit Compass portal, and optional contact forms that feed GoHighLevel.
+An original Choicewright homebuying adventure set in Hearthvale, presented by Erik Miller of Patriot Home Mortgage. The opening quest is a roughly ten-minute introduction to a longer journey. Version 2.3 turns it into an actual purchase: you find out who works for whom, hire somebody who works for you, set a budget, recover your paperwork, get pre-approved, write an offer that can be refused, and pay for the inspections you choose.
 
 Live at **erikmillerhlt.com/play** (source of truth is this repo; see *Deploying* below) and at homebuyersmindset.com.
 
 ## The experience
 
-1. Rent day. Bartleby Quill wants his money, plus a doorknob levy. Play **Rent Day** and keep what you can.
-2. Name your character and pick a look, or put your own face in the game (processed on-device, never uploaded). One screen, then you are playing.
-3. Rowan asks what you want behind your door and when you might move. Those answers shape your buying plan; there is no setup form.
-4. Walk Hearthvale with WASD or the arrows, or hold the mouse down and lead your character around. Coins sit on the paths.
-5. Collect the Budget Compass, Clear-Sight Lens, and Homeward Map. Each guide has a game.
-6. Explore a home and work through a repair discovery.
-7. Meet Erik, the lender at the gate, under the Patriot Home Mortgage flag. Your coins become fictional down payment and you see what that does to a monthly payment. Ask about Arizona programs.
-8. Say hello to Albert, the paperwork wizard, in the castle keep. The Augusta wind blew your paperwork across Hearthvale; Albert knows what a lender needs and where each page landed. Recover all five for the Ready Satchel.
-9. Reach the lantern bridge to earn the First Key and unlock Your Buying Plan, which you can send to Erik.
-10. Off the marked paths, a ring of humming stones opens a preview of the Credit Compass side series.
+1. You are asleep. Bartleby Quill lets himself in, takes the rent plus a doorknob levy and a sunlight surcharge, and leaves. Play **Rent Day** and keep what you can.
+2. Name your character and pick a look, or put your own face in the game — the photo is cropped, quantised and composited into the character's own head on your device, and never uploaded. One screen, then you are playing.
+3. Rowan asks the one question that matters — what do you want behind your door — and gets out of the way. That is the whole of the front end.
+4. Walk Hearthvale with WASD or the arrows, tap the map, or hold the mouse down and lead your character. **You stay on the roads**: the walkable network is derived from the map art itself, so there is no strolling across the pond or over the castle towers. Coins sit on the paths.
+5. Two first moves, in either order. **The open house on Three-Door Lane**: Percival Bright asks whether you are working with an agent. Say no and he explains, straight, that he works for the seller. Say yes and he asks which one, and whether you signed a buyer-broker agreement — and if you did, he shows you the door and answers questions about the house only. Either way you find out he would happily represent you as well, and what that means. **Hearthvale Realty**: interview three agents and pick one.
+6. Your agent takes you to the lender. Nobody at the gate writes a loan for a buyer with no one on their side.
+7. **Get qualified.** Erik needs two things: a housing number you set yourself at Mira's shop, and every one of your five financial documents — which the Augusta wind scattered across Hearthvale this morning, and which Albert, the paperwork wizard, watched land. No budget and no documents, no letter. No letter, no offer.
+8. **Write an offer.** Under asking, at asking, or over asking with the inspection waived. It can be countered, it can be accepted because your letter was stapled to it, and it can lose the house to somebody else on a Tuesday.
+9. **Inspect what you choose to inspect.** General, roof, sewer, termite: each costs real money out of your emergency pouch before you own anything, and each finds different things. What you did not pay to look at is what you find out about later.
+10. Handle the roof — negotiate, pay for it, or use the contingency and step back — then take the First Key and unlock Your Buying Plan, which you can send to Erik.
+11. Off the marked paths, a ring of humming stones opens a preview of the Credit Compass side series.
 
 The animated opening is optional and lives under How to play, so nothing stands between opening the page and playing.
 
@@ -27,9 +28,9 @@ Five original pixel games live in `dist/arcade/`. Each runs inside the story at 
 | --- | --- | --- |
 | Rent Day | Your cottage | Rent buys a month and never comes back. |
 | Coin Catch | Mira’s shop | Keep emergency money separate from the down payment. |
-| Offer Match | The guild hall | Compare the whole offer, not the advertised payment. |
+| Offer Match | Erik at the gate | Compare the whole offer, not the advertised payment. |
 | Inspection Hunt | Three-Door Lane | An inspection is not an appraisal. |
-| Down Payment Dash | The lantern bridge | A bigger down payment lowers the payment and can remove mortgage insurance. |
+| Down Payment Dash | The Loan Castle | A bigger down payment lowers the payment and can remove mortgage insurance. |
 
 Coins: path coins are worth 3, each game awards up to 40 (only improvements over your best run count), the portal awards 25. One coin is $100 of fictional down payment; the payment change uses standard 30-year amortization at the fictional rate in `config.js`.
 
@@ -55,7 +56,7 @@ Serve `dist/` over HTTP, for example:
 python3 -m http.server 8080 --directory dist
 ```
 
-Open `http://localhost:8080`. The game uses JavaScript modules, so opening the HTML directly as a file is not supported. No dependency installation is required. Run `npm run check` and `npm test` for syntax and story-model checks (the tests cover 72 complete journey variants, the portal bonus, the coin economy, profile plans, and save migration).
+Open `http://localhost:8080`. The game uses JavaScript modules, so opening the HTML directly as a file is not supported. No dependency installation is required. Run `npm run check` and `npm test` for syntax and story-model checks (the tests cover 36 complete journey variants across both first moves and all three agents, the path network, the pre-approval gate, every offer outcome, paid inspections, the portal bonus, the coin economy, and save migration).
 
 ## Deploying
 
@@ -64,8 +65,10 @@ Open `http://localhost:8080`. The game uses JavaScript modules, so opening the H
 
 ## Files
 
-- `dist/story-data.js`: authored nodes, locations, map coins, secret spots, episodes, items, sources, coin helpers, save-state migration.
-- `dist/profile.js`: character choices, profile validation, learning-plan rules, next-destination selection.
+- `dist/story-data.js`: authored nodes, locations, agents, inspection kinds, map coins, documents, secret spots, episodes, items, sources, the purchase state machine (who represents you, whether you are pre-approved, where the offer stands), and save migration.
+- `dist/paths.js`: where you can walk. A 192 x 128 bitmap of the road network, derived from the map art by `scripts/build-paths.py`, plus the routing and collision the movement engine uses.
+- `dist/character.js`: the pixel adventurer, its walk cycle, and the compositing that puts a player's photo into the character's own head.
+- `dist/profile.js`: character choices, profile validation, learning-plan rules.
 - `dist/app.js`: map and movement engine, dialogue, arcade launcher, character setup and photo avatar, prologue, sound, Erik bubble, plan, series, share card.
 - `dist/config.js`, `dist/analytics.js`, `dist/lead.js`, `dist/avatar.js`: presenter config, event tracking, contact forms, photo pixelator and share card.
 - `dist/arcade/arcade-core.js`: shared mini-game runtime; `dist/arcade/*.js` the four games; `dist/arcade/<game>/index.html` their standalone pages; `dist/arcade/og/` share images.
