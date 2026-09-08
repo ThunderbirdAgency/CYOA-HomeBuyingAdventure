@@ -1,10 +1,174 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#102823"><meta name="description" content="Explore Hearthvale in The First Key, an original retro adventure about the first steps toward homeownership. Play, learn, and bring your field guide into the real world."><title>The First Key · The Legend of Homeownership</title><link rel="stylesheet" href="style.css"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23102823'/%3E%3Ctext y='29' x='9' font-size='28' fill='%23efcc79'%3E⚿%3C/text%3E%3C/svg%3E"></head><body>
-<header class="topbar"><a class="brand" href="./" aria-label="The First Key home"><span class="brandmark">⚿</span><span>CHOICEWRIGHT<small>ADVENTURES WORTH TAKING</small></span></a><span class="edition">THE LEGEND OF HOMEOWNERSHIP</span><nav aria-label="Game controls"><button id="music" title="Mute or unmute music" aria-pressed="false">♫ <span>Sound off</span></button><button id="audio-settings" aria-label="Volume controls">☷ <span>Volume</span></button><button id="profile-button" aria-label="Your adventurer profile">◉ <span>My adventurer</span></button><button id="help" aria-label="How to play">? <span>How to play</span></button><button id="journal">▤ <span>Field journal</span></button><button id="series">◇ <span>Series</span></button></nav></header>
-<main><section class="heading"><div><div class="eyebrow">VOLUME I <span>✦</span> EPISODE 01</div><h1>The First Key<span>.</span></h1><p>Every great adventure begins with a place to call home.</p></div><div class="chapter-progress"><span id="progress-label">YOUR JOURNEY · 0 OF 6</span><div class="progress-track"><i id="progress"></i></div><span class="small">A 10-minute opening quest · A bigger journey ahead</span></div></section>
-<section class="objective-bar" aria-label="Current objective"><div><span class="eyebrow">YOUR MISSION</span><p id="objective-text">Collect 3 tools, face your first house decision, and reach the lantern bridge.</p></div><button id="next-destination" class="primary">Show me where to go →</button></section><div class="game-layout"><section class="world-wrap" aria-label="Interactive map of Hearthvale"><div class="world" id="world" tabindex="0" aria-label="Hearthvale map. Use arrow keys or W A S D to move, E to visit a nearby destination. You can also select any unlocked destination."><img src="assets/hearthvale.webp" alt="An enchanted pixel-art town with forest trails, a market, an archive, houses, and a bridge to a new beginning." id="map-image"><div class="world-shade"></div><div class="map-title"><span>THE GREENLANDS</span><strong>Hearthvale</strong></div><div class="weather">✧ <span>Golden hour</span></div><div id="pins"></div><div id="traveler" aria-hidden="true"><span class="hero-token" id="hero-token"></span><i></i></div><div class="map-caption"><span class="live-light"></span><span id="map-hint">Your adventure is waiting.</span></div><div class="compass" aria-hidden="true">N<br>✥</div></div><div class="map-toolbar"><span>⌖ <b>Explore at your own pace</b></span><span class="desktop-help"><kbd>W A S D</kbd> move <kbd>E</kbd> visit · or click a place</span><span class="mobile-help">Tap a marked place to visit</span></div></section>
-<aside class="quest-panel"><div class="quest-top"><span class="eyebrow" id="player-label">YOUR ADVENTURE</span><span class="tag">CHAPTER 1</span></div><h2>Earn your first key</h2><p class="quest-intro" id="quest-intro">The lanterns are lit. The paths are open. Your next chapter is yours to choose.</p><ol id="quest-list"></ol><div class="inventory"><span class="eyebrow">IN YOUR SATCHEL</span><div id="items"></div></div><div class="guide-note"><span>✦</span><p>“A key opens a door.<br>Understanding helps you choose it.”<small>ROWAN · YOUR GUIDE</small></p></div></aside></div>
-<footer><span>A CHOICEWRIGHT ORIGINAL <i>✦</i> PEASANT PUBLISHING</span><button id="sources">The facts behind the adventure ↗</button><span class="save-note" id="save-note">Progress stays on this device</span></footer></main>
-<dialog id="welcome" class="welcome"><div class="welcome-art"></div><div class="welcome-body"><span class="eyebrow">THE LEGEND OF HOMEOWNERSHIP</span><div class="welcome-key">⚿</div><h2>The First Key</h2><p>Rent day. Again.<br>What if your next chapter had a door of its own?</p><div class="welcome-meta"><span>✦ Pick your adventurer</span><span>♫ Original retro soundtrack</span><span>◷ A 10-minute first quest</span></div><button class="primary" id="begin">Create your adventurer <span>→</span></button><button class="quiet" id="quiet">Play without sound</button><p class="fine">A fictional adventure with real-world lessons. No financial information needed.</p></div></dialog>
-<dialog id="story" class="story"><div class="story-top"><span id="scene-location" class="eyebrow"></span><div><button id="story-volume" aria-label="Volume controls">♫ Volume</button><button id="narrate" aria-pressed="false" title="Read this scene aloud">◖ Read aloud</button><button id="close-story" aria-label="Return to map">✕</button></div></div><div class="story-body" id="story-body"></div><div class="story-bottom"><button id="back-scene">↶ Previous choice</button><span id="scene-count"></span><button id="scene-source">Fact check ↗</button></div></dialog>
-<dialog id="setup" class="setup"><div id="setup-body"></div></dialog><dialog id="prologue" class="prologue"><div id="prologue-body"></div></dialog><dialog id="sound-panel" class="sound-panel"><div class="story-top"><span class="eyebrow">SOUND &amp; VOICE</span><button id="close-sound" aria-label="Close volume controls">✕</button></div><div class="sound-body"><label for="music-volume">Music <output id="music-level">60%</output></label><input id="music-volume" type="range" min="0" max="100" value="60"><button class="secondary" id="sound-mute">Turn music on</button><label for="voice-volume">Read-aloud voice <output id="voice-level">80%</output></label><input id="voice-volume" type="range" min="0" max="100" value="80"><p class="small">Voice plays when you select Read aloud. Settings stay on this device.</p></div></dialog><dialog id="utility" class="utility"><div class="story-top"><span id="utility-label" class="eyebrow">FIELD JOURNAL</span><button id="close-utility" aria-label="Close">✕</button></div><div id="utility-body"></div></dialog><div id="toast" role="status"></div>
-<script type="module" src="app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#102823" />
+    <meta name="description" content="Explore Hearthvale in The First Key, an original retro adventure about the first steps toward homeownership. Play, learn, earn coins in the arcade, and bring your buying plan into the real world." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="The First Key · The Legend of Homeownership" />
+    <meta property="og:description" content="A 10-minute retro adventure about buying your first home. Pick your adventurer, put your own face in the game, and earn your first key." />
+    <meta property="og:image" content="arcade/og/first-key.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>The First Key · The Legend of Homeownership</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="arcade/arcade.css" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23102823'/%3E%3Ctext y='29' x='9' font-size='28' fill='%23efcc79'%3E⚿%3C/text%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="The First Key home"><span class="brandmark">⚿</span><span>CHOICEWRIGHT<small>ADVENTURES WORTH TAKING</small></span></a>
+      <span class="edition">THE LEGEND OF HOMEOWNERSHIP</span>
+      <nav aria-label="Game controls">
+        <button id="music" title="Mute or unmute music" aria-pressed="false">♫ <span>Sound off</span></button>
+        <button id="audio-settings" aria-label="Volume controls">☷ <span>Volume</span></button>
+        <button id="profile-button" aria-label="Your adventurer profile">◉ <span>My adventurer</span></button>
+        <button id="arcade-button" aria-label="Hearthvale arcade">▶ <span>Arcade</span></button>
+        <button id="help" aria-label="How to play">? <span>How to play</span></button>
+        <button id="journal">▤ <span>Field journal</span></button>
+        <button id="series">◇ <span>Series</span></button>
+      </nav>
+    </header>
+    <main>
+      <section class="heading">
+        <div>
+          <div class="eyebrow">VOLUME I <span>✦</span> EPISODE 01</div>
+          <h1>The First Key<span>.</span></h1>
+          <p>Every great adventure begins with a place to call home.</p>
+        </div>
+        <div class="chapter-progress">
+          <span id="progress-label">YOUR JOURNEY · 0 OF 6</span>
+          <div class="progress-track"><i id="progress"></i></div>
+          <span class="small">A 10-minute opening quest · A bigger journey ahead</span>
+        </div>
+      </section>
+      <section class="objective-bar" aria-label="Current objective">
+        <div><span class="eyebrow">YOUR MISSION</span><p id="objective-text">Collect 3 tools, face your first house decision, and reach the lantern bridge.</p></div>
+        <button id="next-destination" class="primary">Show me where to go →</button>
+      </section>
+      <div class="game-layout">
+        <section class="world-wrap" aria-label="Interactive map of Hearthvale">
+          <div class="world" id="world" tabindex="0" aria-label="Hearthvale map. Use arrow keys or W A S D to walk, E to enter a nearby place. You can also select any unlocked destination, or tap the map to walk there.">
+            <div class="world-layer" id="layer">
+              <img src="assets/hearthvale.webp" alt="An enchanted pixel-art town with forest trails, a market, a tower, houses, and a castle bridge to a new beginning." id="map-image" draggable="false" />
+              <div class="castle-flag" aria-hidden="true">
+                <svg viewBox="0 0 120 70" width="120" height="70">
+                  <rect x="4" y="4" width="3" height="66" fill="#3b2a1a" /><rect x="5" y="2" width="1" height="68" fill="#8a6a3a" /><circle cx="5.5" cy="3" r="2.5" fill="#efd08a" />
+                  <path class="flag-cloth" fill="#061744" d="M8 6 Q30 2 52 6 T96 6 L96 34 Q74 38 52 34 T8 34 Z">
+                    <animate attributeName="d" dur="1.6s" repeatCount="indefinite" values="M8 6 Q30 2 52 6 T96 6 L96 34 Q74 38 52 34 T8 34 Z;M8 6 Q30 10 52 6 T96 6 L96 34 Q74 30 52 34 T8 34 Z;M8 6 Q30 2 52 6 T96 6 L96 34 Q74 38 52 34 T8 34 Z" />
+                  </path>
+                  <path fill="#fb8122" d="M8 34 Q30 30 52 34 T96 34 L96 40 Q74 44 52 40 T8 40 Z">
+                    <animate attributeName="d" dur="1.6s" repeatCount="indefinite" values="M8 34 Q30 30 52 34 T96 34 L96 40 Q74 44 52 40 T8 40 Z;M8 34 Q30 38 52 34 T96 34 L96 40 Q74 36 52 40 T8 40 Z;M8 34 Q30 30 52 34 T96 34 L96 40 Q74 44 52 40 T8 40 Z" />
+                  </path>
+                  <text x="52" y="17" text-anchor="middle" font-family="'Press Start 2P','Courier New',monospace" font-size="7" fill="#f0f0df">PATRIOT</text>
+                  <text x="52" y="28" text-anchor="middle" font-family="'Press Start 2P','Courier New',monospace" font-size="5.2" fill="#efd08a">HOME MORTGAGE</text>
+                  <g class="flag-star" fill="#efd08a"><path d="M104 12 l1.6 3.4 3.7.4-2.8 2.5.8 3.7-3.3-1.9-3.3 1.9.8-3.7-2.8-2.5 3.7-.4z" /></g>
+                </svg>
+              </div>
+              <div id="secrets"></div>
+              <div id="coins"></div>
+              <div id="pins"></div>
+              <div id="teasers"></div>
+              <div id="traveler" aria-hidden="true">
+                <div class="enter-hint" id="enter-hint" hidden></div>
+                <span class="hero-token" id="hero-token"></span>
+                <i></i>
+              </div>
+            </div>
+            <div class="world-shade"></div>
+            <div class="map-title"><span>THE GREENLANDS</span><strong>Hearthvale</strong></div>
+            <div class="weather">✧ <span>Golden hour</span></div>
+            <div class="map-caption"><span class="live-light"></span><span id="map-hint">Your adventure is waiting.</span></div>
+            <div class="compass" aria-hidden="true">N<br />✥</div>
+            <button class="zoom-toggle" id="zoom-toggle" aria-pressed="true" title="Follow camera">⌖</button>
+          </div>
+          <div class="map-toolbar">
+            <span>⌖ <b>Explore at your own pace</b></span>
+            <span class="desktop-help"><kbd>W A S D</kbd> walk <kbd>E</kbd> enter · click anywhere to walk there</span>
+            <span class="mobile-help">Tap the map to walk · tap a place to enter</span>
+          </div>
+          <div class="dpad" id="dpad" aria-label="Touch controls">
+            <button data-dir="up" aria-label="Walk up">▲</button>
+            <button data-dir="left" aria-label="Walk left">◀</button>
+            <button data-act="enter" aria-label="Enter nearby place" class="dpad-act">●</button>
+            <button data-dir="right" aria-label="Walk right">▶</button>
+            <button data-dir="down" aria-label="Walk down">▼</button>
+          </div>
+        </section>
+        <aside class="quest-panel">
+          <div class="quest-top"><span class="eyebrow" id="player-label">YOUR ADVENTURE</span><span class="tag">CHAPTER 1</span></div>
+          <h2>Earn your first key</h2>
+          <p class="quest-intro" id="quest-intro">The lanterns are lit. The paths are open. Your next chapter is yours to choose.</p>
+          <ol id="quest-list"></ol>
+          <div class="coin-pouch" id="coin-pouch" title="Coins become fictional down payment at the gate">
+            <span class="coin-icon">◉</span><div><b><span id="coin-count">0</span> coins</b><small id="coin-value">Walk the paths and play the arcade to fill your pouch.</small></div>
+          </div>
+          <div class="inventory"><span class="eyebrow">IN YOUR SATCHEL</span><div id="items"></div></div>
+          <div class="guide-note"><span>✦</span><p>“A key opens a door.<br />Understanding helps you choose it.”<small>ROWAN · YOUR GUIDE</small></p></div>
+        </aside>
+      </div>
+      <footer>
+        <span>A CHOICEWRIGHT ORIGINAL <i>✦</i> PRESENTED BY <b id="footer-presenter">ERIK MILLER · PATRIOT HOME MORTGAGE</b></span>
+        <button id="sources">The facts behind the adventure ↗</button>
+        <span class="save-note" id="save-note">Progress stays on this device</span>
+        <small class="legal" id="footer-legal"></small>
+      </footer>
+    </main>
+
+    <div class="erik-bubble" id="erik-bubble" hidden>
+      <div class="bubble-say" id="bubble-say" role="status"></div>
+      <button class="bubble-face" id="bubble-face" aria-expanded="false" aria-controls="bubble-card"><img id="bubble-portrait" alt="" width="64" height="64" /><span class="bubble-dot"></span></button>
+      <div class="bubble-card" id="bubble-card" hidden>
+        <button class="bubble-close" id="bubble-close" aria-label="Close">✕</button>
+        <div class="bubble-head"><img id="bubble-portrait-2" alt="" width="56" height="56" /><div><strong id="bubble-name"></strong><small id="bubble-role"></small></div></div>
+        <p id="bubble-blurb"></p>
+        <div class="bubble-actions">
+          <a class="primary" id="bubble-call" href="#">Call</a>
+          <a class="secondary" id="bubble-text" href="#">Text</a>
+          <a class="secondary" id="bubble-email" href="#">Email</a>
+          <button class="secondary" id="bubble-ask">Ask a question</button>
+          <button class="secondary" id="bubble-plan" hidden>Send my buying plan</button>
+        </div>
+        <small class="bubble-legal" id="bubble-legal"></small>
+      </div>
+    </div>
+
+    <dialog id="welcome" class="welcome">
+      <div class="welcome-art"></div>
+      <div class="welcome-body">
+        <span class="eyebrow">THE LEGEND OF HOMEOWNERSHIP</span>
+        <div class="welcome-key">⚿</div>
+        <h2>The First Key</h2>
+        <p>Rent day. Again.<br />What if your next chapter had a door of its own?</p>
+        <div class="welcome-meta"><span>✦ Pick your adventurer</span><span>◉ Put your face in the game</span><span>▶ Four arcade games</span><span>◷ A 10-minute first quest</span></div>
+        <button class="primary" id="begin">Create your adventurer <span>→</span></button>
+        <button class="quiet" id="quiet">Play without sound</button>
+        <p class="fine">A fictional adventure with real-world lessons, presented by Erik Miller, Patriot Home Mortgage. No financial information needed to play.</p>
+      </div>
+    </dialog>
+    <dialog id="story" class="story">
+      <div class="story-top">
+        <span id="scene-location" class="eyebrow"></span>
+        <div><button id="story-volume" aria-label="Volume controls">♫ Volume</button><button id="narrate" aria-pressed="false" title="Read this scene aloud">◖ Read aloud</button><button id="close-story" aria-label="Return to map">✕</button></div>
+      </div>
+      <div class="story-body" id="story-body"></div>
+      <div class="story-bottom"><button id="back-scene">↶ Previous choice</button><span id="scene-count"></span><button id="scene-source">Fact check ↗</button></div>
+    </dialog>
+    <dialog id="setup" class="setup"><div id="setup-body"></div></dialog>
+    <dialog id="prologue" class="prologue"><div id="prologue-body"></div></dialog>
+    <dialog id="sound-panel" class="sound-panel">
+      <div class="story-top"><span class="eyebrow">SOUND &amp; VOICE</span><button id="close-sound" aria-label="Close volume controls">✕</button></div>
+      <div class="sound-body">
+        <label for="music-volume">Music <output id="music-level">60%</output></label><input id="music-volume" type="range" min="0" max="100" value="60" /><button class="secondary" id="sound-mute">Turn music on</button>
+        <label for="voice-volume">Read-aloud voice <output id="voice-level">80%</output></label><input id="voice-volume" type="range" min="0" max="100" value="80" />
+        <p class="small">Voice plays when you select Read aloud. Settings stay on this device.</p>
+      </div>
+    </dialog>
+    <dialog id="utility" class="utility">
+      <div class="story-top"><span id="utility-label" class="eyebrow">FIELD JOURNAL</span><button id="close-utility" aria-label="Close">✕</button></div>
+      <div id="utility-body"></div>
+    </dialog>
+    <div id="toast" role="status"></div>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

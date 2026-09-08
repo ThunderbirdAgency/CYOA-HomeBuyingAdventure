@@ -1,34 +1,227 @@
-import assert from 'node:assert/strict';
-import {episode,locations,sources,initialState,choose,enter,unlocked,restoreState} from '../dist/story-data.js';
-import {learningPlan,cleanProfile,nextLocation} from '../dist/profile.js';
-const nodes=episode.nodes;
-for(const [id,node] of Object.entries(nodes)){
- assert.ok(node.text.length&&node.choices.length,id+' must have prose and a way forward');
- if(node.source)assert.ok(sources[node.source],id+' source exists');
- for(const c of node.choices)assert.ok(c.to.startsWith('@')||nodes[c.to],id+' choice destination exists');
+import assert from 'node:assert/strict'
+import {
+  episode,
+  locations,
+  sources,
+  items,
+  mapCoins,
+  secretSpots,
+  episodes,
+  teaserPins,
+  initialState,
+  choose,
+  enter,
+  unlocked,
+  restoreState,
+  addCoins,
+  collectMapCoin,
+  recordMinigame,
+} from '../dist/story-data.js'
+import { learningPlan, cleanProfile, nextLocation } from '../dist/profile.js'
+import { monthlyFor, coinsToDollars, coinsToMonthlySavings, config } from '../dist/config.js'
+
+const nodes = episode.nodes
+const MINIGAMES = ['coin-catch', 'offer-match', 'inspection-hunt', 'down-payment-dash']
+const ACTIONS = ['@next', '@plan', '@journal', '@series', '@card', '@close', '@portal-unlock']
+
+/* ---------- authored graph is sound ---------- */
+for (const [id, node] of Object.entries(nodes)) {
+  assert.ok(node.text.length && node.choices.length, id + ' must have prose and a way forward')
+  if (node.source) assert.ok(sources[node.source], id + ' source exists: ' + node.source)
+  if (node.item) assert.ok(items.some((i) => i.id === node.item), id + ' item exists')
+  if (node.minigame) assert.ok(MINIGAMES.includes(node.minigame), id + ' minigame exists')
+  for (const c of node.choices)
+    assert.ok(
+      c.to.startsWith('@') ? ACTIONS.includes(c.to) : nodes[c.to],
+      id + ' choice destination exists: ' + c.to,
+    )
 }
-const seen=new Set();function reach(id){if(seen.has(id))return;seen.add(id);for(const c of nodes[id].choices)if(!c.to.startsWith('@'))reach(c.to);}
-locations.forEach(l=>reach(l.start));assert.equal(seen.size,Object.keys(nodes).length,'all authored scenes reachable');
-function follow(s,ids){for(let i=0;i<ids.length;i++){s.node=ids[i];enter(s,nodes[ids[i]]);if(i+1<ids.length){const c=nodes[ids[i]].choices.find(c=>c.to===ids[i+1]);assert.ok(c,`${ids[i]} -> ${ids[i+1]}`);choose(s,c);}}}
-for(const order of [['market','guild'],['guild','market']])for(const reserve of [0,1000,3000,4000])for(const outcome of ['negotiate','self-fund','step-back']){
- const s=initialState();assert.equal(unlocked(s,locations[3]),false);
- follow(s,['letter','rowan','purpose']);
- for(const id of order){assert.ok(unlocked(s,locations.find(l=>l.id===id)));if(id==='market'){follow(s,['market','budget-choice','reserve']);s.vars.reserve=reserve;follow(s,['market-end']);}else follow(s,['guild','guild-hasty','guild-end']);}
- assert.ok(unlocked(s,locations[3]));follow(s,['course','course-end']);
- follow(s,['homes','appraisal','inspection',outcome,...(outcome==='self-fund'?['homes-end']:['homes-end'])]);
- assert.ok(unlocked(s,locations[5]));follow(s,['bridge','ending']);
- assert.equal(new Set(s.done).size,6);assert.equal(s.inventory.length,4);assert.ok(s.ended);
- assert.equal(s.vars.reserve,reserve,'reserve must persist into repair scenario');
- enter(s,nodes.ending);assert.equal(s.inventory.length,4,'revisiting ending must not duplicate rewards');
+const seen = new Set()
+function reach(id) {
+  if (seen.has(id)) return
+  seen.add(id)
+  for (const c of nodes[id].choices) if (!c.to.startsWith('@')) reach(c.to)
 }
-for(const focus of ['budget','process','homes']){
- const profile=cleanProfile({name:'River',question:focus,goal:'space',timeline:'soon',hero:'wayfinder',complete:true});
- const plan=learningPlan(profile);assert.equal(plan.tasks.length,3);assert.ok(plan.tasks.every(t=>t.id.startsWith(focus+'-')));assert.match(plan.goal,/room/);assert.match(plan.pace,/conversation/);
- const s=initialState();s.profile=profile;s.done=['cottage'];assert.equal(nextLocation(s,locations,unlocked).id,focus==='process'?'guild':'market');
+locations.forEach((l) => reach(l.start))
+secretSpots.forEach((s) => reach(s.start))
+reach('portal-open') // opened by the @portal-unlock action
+assert.equal(seen.size, Object.keys(nodes).length, 'all authored scenes reachable')
+for (const s of secretSpots) assert.ok(nodes[s.start], 'secret spot start exists')
+for (const p of teaserPins) assert.ok(episodes.some((e) => e.number === p.episode), 'teaser pin episode exists')
+assert.equal(episodes.filter((e) => e.status === 'playable').length, 1)
+assert.equal(episodes.length, 5)
+assert.ok(mapCoins.length >= 10 && new Set(mapCoins.map((c) => c.id)).size === mapCoins.length)
+for (const c of mapCoins) assert.ok(c.x > 2 && c.x < 98 && c.y > 2 && c.y < 98, 'coin on the map')
+
+/* ---------- complete journeys ---------- */
+function follow(s, ids) {
+  for (let i = 0; i < ids.length; i++) {
+    s.node = ids[i]
+    enter(s, nodes[ids[i]])
+    if (i + 1 < ids.length) {
+      const c = nodes[ids[i]].choices.find((c) => c.to === ids[i + 1])
+      assert.ok(c, `${ids[i]} -> ${ids[i + 1]}`)
+      choose(s, c)
+    }
+  }
 }
-const migrated=restoreState({version:1,started:true,done:['cottage','market','guild','archive','homes','gate'],inventory:['compass','lens','ledger','key'],node:'ending',location:'gate',ended:true,vars:{reserve:1000}});
-assert.equal(migrated.version,2);assert.equal(migrated.node,'course');assert.equal(migrated.location,'lookout');assert.equal(migrated.ended,false);assert.equal(migrated.vars.reserve,1000);assert.ok(!migrated.done.includes('archive'));assert.ok(!migrated.inventory.includes('ledger'));assert.ok(!migrated.inventory.includes('key'));
-assert.ok(unlocked(migrated,locations.find(l=>l.id==='lookout')));assert.ok(!unlocked(migrated,locations.find(l=>l.id==='gate')));
-const s=initialState();s.profile=cleanProfile({name:'Oak',question:'homes',complete:true});s.planTasks=['homes-needs'];s.started=true;const restored=restoreState(JSON.parse(JSON.stringify(s)));assert.equal(restored.profile.name,'Oak');assert.deepEqual(restored.planTasks,['homes-needs']);
-assert.ok(!Object.values(nodes).some(n=>['credit','dispute','rebuild','ftc'].includes(n.source)),'credit is outside the homebuying episode');
-console.log('Passed: 24 full journey variants; all scene links and sources; profile-based directions and plans; previous-save migration; quest locks and rewards.');
+const GATE_PATHS = [
+  ['bridge', 'lender', 'bridge-choice', 'ending'],
+  ['bridge', 'lender', 'arizona', 'bridge-choice', 'ending'],
+  ['bridge', 'lender', 'lender-questions', 'arizona', 'lender-questions', 'bridge-choice', 'ending'],
+]
+let variants = 0
+for (const order of [
+  ['market', 'guild'],
+  ['guild', 'market'],
+])
+  for (const reserve of [0, 1000, 3000, 4000])
+    for (const outcome of ['negotiate', 'self-fund', 'step-back'])
+      for (const gatePath of GATE_PATHS) {
+        const s = initialState()
+        assert.equal(unlocked(s, locations[3]), false)
+        follow(s, ['letter', 'rowan', 'purpose'])
+        for (const id of order) {
+          assert.ok(unlocked(s, locations.find((l) => l.id === id)))
+          if (id === 'market') {
+            follow(s, ['market', 'budget-choice', 'reserve'])
+            s.vars.reserve = reserve
+            follow(s, ['market-end'])
+          } else follow(s, ['guild', 'guild-hasty', 'guild-end'])
+        }
+        assert.ok(unlocked(s, locations[3]))
+        follow(s, ['course', 'course-end'])
+        follow(s, ['homes', 'appraisal', 'inspection', outcome, 'homes-end'])
+        assert.ok(unlocked(s, locations[5]))
+        follow(s, gatePath)
+        assert.equal(new Set(s.done).size, 6)
+        assert.equal(s.inventory.length, 4)
+        assert.ok(s.ended)
+        assert.equal(s.visitedArizona, gatePath.includes('arizona'))
+        assert.equal(s.vars.reserve, reserve, 'reserve must persist into repair scenario')
+        enter(s, nodes.ending)
+        assert.equal(s.inventory.length, 4, 'revisiting ending must not duplicate rewards')
+        variants++
+      }
+assert.equal(variants, 72)
+
+/* ---------- the portal is a bonus, not a gate ---------- */
+{
+  const s = initialState()
+  follow(s, ['portal-open', 'ledger', 'ledger-dispute'])
+  assert.ok(s.inventory.includes('rune'))
+  assert.equal(s.coins, 25)
+  assert.equal(s.done.length, 0, 'portal does not complete quest locations')
+  enter(s, nodes['ledger-dispute'])
+  assert.equal(s.coins, 25, 'rune coins awarded once')
+  assert.ok(!s.ended)
+  // Credit sources only appear in the bonus portal scenes, never on the homebuying quest path.
+  const portalNodes = new Set(['portal', 'portal-open', 'ledger', 'ledger-dispute'])
+  for (const [id, n] of Object.entries(nodes))
+    if (['credit', 'dispute', 'rebuild', 'ftc'].includes(n.source)) assert.ok(portalNodes.has(id), id)
+}
+
+/* ---------- coin economy ---------- */
+{
+  const s = initialState()
+  assert.ok(collectMapCoin(s, 'c1'))
+  assert.ok(!collectMapCoin(s, 'c1'), 'each map coin once')
+  assert.ok(!collectMapCoin(s, 'nope'))
+  assert.equal(s.coins, 3)
+  assert.equal(recordMinigame(s, { id: 'coin-catch', score: 100, coins: 12 }), 12)
+  assert.equal(recordMinigame(s, { id: 'coin-catch', score: 50, coins: 8 }), 0, 'worse run adds nothing')
+  assert.equal(recordMinigame(s, { id: 'coin-catch', score: 300, coins: 20 }), 8, 'only the improvement')
+  assert.equal(s.minigames['coin-catch'].plays, 3)
+  assert.equal(s.minigames['coin-catch'].score, 300)
+  assert.equal(s.coins, 23)
+  addCoins(s, -100)
+  assert.equal(s.coins, 0, 'never negative')
+  assert.equal(coinsToDollars(40), 4000)
+  assert.ok(Math.abs(monthlyFor(300000, 0.065, 30) - 1896.2) < 0.5, 'amortization sanity')
+  assert.ok(coinsToMonthlySavings(200) > 100 && coinsToMonthlySavings(200) < 140)
+  assert.equal(config.presenter.nmls, '263103')
+}
+
+/* ---------- profile-based plans ---------- */
+for (const focus of ['budget', 'process', 'homes']) {
+  const profile = cleanProfile({
+    name: 'River',
+    question: focus,
+    goal: 'space',
+    timeline: 'soon',
+    hero: 'wayfinder',
+    complete: true,
+  })
+  const plan = learningPlan(profile)
+  assert.equal(plan.tasks.length, 3)
+  assert.ok(plan.tasks.every((t) => t.id.startsWith(focus + '-')))
+  assert.match(plan.goal, /room/)
+  assert.match(plan.pace, /conversation/)
+  const s = initialState()
+  s.profile = profile
+  s.done = ['cottage']
+  assert.equal(nextLocation(s, locations, unlocked).id, focus === 'process' ? 'guild' : 'market')
+}
+
+/* ---------- save migration ---------- */
+const migrated = restoreState({
+  version: 1,
+  started: true,
+  done: ['cottage', 'market', 'guild', 'archive', 'homes', 'gate'],
+  inventory: ['compass', 'lens', 'ledger', 'key'],
+  node: 'ending',
+  location: 'gate',
+  ended: true,
+  vars: { reserve: 1000 },
+})
+assert.equal(migrated.version, 3)
+assert.equal(migrated.node, 'course')
+assert.equal(migrated.location, 'lookout')
+assert.equal(migrated.ended, false)
+assert.equal(migrated.vars.reserve, 1000)
+assert.ok(!migrated.done.includes('archive'))
+assert.ok(!migrated.inventory.includes('ledger'))
+assert.ok(!migrated.inventory.includes('key'))
+assert.equal(migrated.coins, 0)
+assert.deepEqual(migrated.coinsCollected, [])
+assert.equal(migrated.portal, 'hidden')
+assert.ok(unlocked(migrated, locations.find((l) => l.id === 'lookout')))
+assert.ok(!unlocked(migrated, locations.find((l) => l.id === 'gate')))
+
+const v2 = restoreState({
+  version: 2,
+  started: true,
+  done: ['cottage', 'market'],
+  inventory: ['compass'],
+  node: 'market-end',
+  location: 'market',
+  vars: { reserve: 2000 },
+  player: { x: 40, y: 50 },
+})
+assert.equal(v2.version, 3)
+assert.equal(v2.player.facing, 1)
+assert.equal(v2.coins, 0)
+assert.equal(v2.node, 'market-end')
+
+const s = initialState()
+s.profile = cleanProfile({ name: 'Oak', question: 'homes', complete: true })
+s.planTasks = ['homes-needs']
+s.started = true
+s.coins = 42
+s.coinsCollected = ['c1', 'bogus']
+s.portal = 'open'
+s.avatar = 'data:image/png;base64,AAAA'
+s.lead = { plan: true }
+const restored = restoreState(JSON.parse(JSON.stringify(s)))
+assert.equal(restored.profile.name, 'Oak')
+assert.deepEqual(restored.planTasks, ['homes-needs'])
+assert.equal(restored.coins, 42)
+assert.deepEqual(restored.coinsCollected, ['c1'])
+assert.equal(restored.portal, 'open')
+assert.equal(restored.avatar, s.avatar)
+assert.equal(restored.lead.plan, true)
+assert.equal(restoreState({ ...JSON.parse(JSON.stringify(s)), avatar: 'javascript:alert(1)' }).avatar, null)
+
+console.log(
+  `Passed: ${variants} full journey variants; all scene links, items, and sources; portal bonus; coin economy; profile plans; save migration v1/v2/v3.`,
+)

@@ -1,19 +1,43 @@
 # The First Key
 
-An original Choicewright homebuying adventure set in Hearthvale. The opening quest is designed as a roughly ten-minute introduction to a longer journey.
+An original Choicewright homebuying adventure set in Hearthvale, presented by Erik Miller of Patriot Home Mortgage. The opening quest is a roughly ten-minute introduction to a longer journey. Version 2.0 adds the Hearthvale Arcade, a coin economy, free walking, a photo-to-pixel avatar, Erik as a character at the castle gate, Arizona field notes, a hidden Credit Compass portal, and optional contact forms that feed GoHighLevel.
+
+Live at **erikmillerhlt.com/play** (source of truth is this repo; see *Deploying* below) and at homebuyersmindset.com.
 
 ## The experience
 
-1. Choose one of three original adventurers, add a nickname, and pick a keepsake.
+1. Choose one of three adventurers, or upload a photo and become a pixel portrait (processed on-device, never uploaded).
 2. Set your homeownership goal, timing, and biggest question.
-3. Watch the short animated pixel-art prologue, or skip it.
-4. Collect the Budget Compass, Clear-Sight Lens, and Homeward Map.
-5. Explore a home and work through a repair discovery.
-6. Reach the lantern bridge to earn the First Key and unlock Your Buying Plan.
+3. Watch the short animated prologue, or skip it.
+4. Walk Hearthvale with WASD, arrows, the on-screen d-pad, or tap-to-walk. Pick up coins on the paths.
+5. Collect the Budget Compass, Clear-Sight Lens, and Homeward Map. Each guide offers a bonus arcade game.
+6. Explore a home and work through a repair discovery.
+7. Meet Erik, the lender at the gate, under the Patriot Home Mortgage flag. Your coins become fictional down payment and you see what that does to a monthly payment. Ask about Arizona programs.
+8. Reach the lantern bridge to earn the First Key and unlock Your Buying Plan, which you can send to Erik.
+9. Off the marked paths, a ring of humming stones opens a preview of the Credit Compass side series.
 
-A persistent objective and Go to button identify the next destination. Players may click locations or focus the map and use WASD/arrows and E. Dialogue choices also accept 1–3. Previous choice enables alternative paths.
+## Hearthvale Arcade
 
-Your Buying Plan is an interactive checklist personalized by the player's chosen learning focus, goal, and timing. Profiles can be edited at any time. Profiles, plan progress, and game progress stay on the current device; nothing is submitted to a lender or agent.
+Four original pixel games live in `dist/arcade/`. Each runs inside the story at the matching location and on its own shareable page with Open Graph images.
+
+| Game | Where | Lesson |
+| --- | --- | --- |
+| Coin Catch | Mira’s shop | Keep emergency money separate from the down payment. |
+| Offer Match | The guild hall | Compare the whole offer, not the advertised payment. |
+| Inspection Hunt | Three-Door Lane | An inspection is not an appraisal. |
+| Down Payment Dash | The lantern bridge | A bigger down payment lowers the payment and can remove mortgage insurance. |
+
+Coins: path coins are worth 3, each game awards up to 40 (only improvements over your best run count), the portal awards 25. One coin is $100 of fictional down payment; the payment change uses standard 30-year amortization at the fictional rate in `config.js`.
+
+## Contact forms and analytics
+
+Everything is opt-in and the game never withholds progress if a player declines or delivery fails. Forms post to the erikmillerhlt.com lead API (`/api/lead/`), which forwards to GoHighLevel with the funnel tags `game-plan`, `game-question`, `game-portal`, and `game-episode` plus a `game-lead` tag. Off-site hosts post cross-origin to the same API; override `leadEndpoint` in `window.FIRST_KEY_CONFIG` if needed.
+
+`analytics.js` emits events (`game_start`, `location_enter`, `choice`, `coin_pickup`, `minigame_start`, `minigame_end`, `lead_open`, `lead_submit`, `contact_click`, `game_complete`, `plan_open`, `portal_found`, `portal_open`, `share`, and more) to whatever exists on the host page: `dataLayer`, `gtag`, Vercel `va`, or a first-party beacon endpoint. Add `?debug=1` to log events in the console.
+
+## Configuration
+
+`dist/config.js` holds the presenter defaults (name, NMLS, phone, email, legal line), the fictional rate, and the coin value. A host page can override any of it by defining `window.FIRST_KEY_CONFIG` before `app.js` loads; the erikmillerhlt.com build does this automatically from its business facts. URL parameters: `?partner=Name` (or `?agent=`) attributes the session to a referring agent and is passed through to GoHighLevel; `?debug=1` logs analytics.
 
 ## Run locally
 
@@ -23,26 +47,26 @@ Serve `dist/` over HTTP, for example:
 python3 -m http.server 8080 --directory dist
 ```
 
-Open `http://localhost:8080`. The game uses JavaScript modules, so opening the HTML directly as a file is not supported.
+Open `http://localhost:8080`. The game uses JavaScript modules, so opening the HTML directly as a file is not supported. No dependency installation is required. Run `npm run check` and `npm test` for syntax and story-model checks (the tests cover 72 complete journey variants, the portal bonus, the coin economy, profile plans, and save migration).
 
-No dependency installation is required. Run `npm run check` and `npm test` for syntax and story-model checks.
+## Deploying
+
+- **erikmillerhlt.com/play**: run `scripts/sync-to-website.sh ../erikmillerhlt` to copy `dist/` into the site repo’s `play/` directory, then commit there. The site build copies it to `public/play/`, injects the business facts and the Vercel Web Analytics script, and adds the pages to the sitemap.
+- **homebuyersmindset.com**: serve `dist/` as-is (`.openai/hosting.json` points at it).
 
 ## Files
 
-- `dist/story-data.js`: authored nodes, locations, variables, rewards, sources, save-state migration.
+- `dist/story-data.js`: authored nodes, locations, map coins, secret spots, episodes, items, sources, coin helpers, save-state migration.
 - `dist/profile.js`: character choices, profile validation, learning-plan rules, next-destination selection.
-- `dist/app.js`: map, dialogue, character setup, animated prologue, sound controls, profile editor, and checklist.
-- `dist/audio.js`: original procedural retro soundtrack and cues; music gain and narration ducking.
-- `dist/style.css`: responsive presentation and reduced-motion support.
-- `dist/assets/`: original generated map and character artwork.
-- `tests/story.test.mjs`: complete journey variants, progression, save migration, and profile-specific plans.
-
-## Audio
-
-Sound starts after a user gesture. Music and browser read-aloud voice have separate volume controls. Music can be muted without changing the saved volume. Read-aloud is optional browser speech synthesis, not a live AI character. The prologue is animated artwork and captions, not an MP4 or a live-rendered video stream.
+- `dist/app.js`: map and movement engine, dialogue, arcade launcher, character setup and photo avatar, prologue, sound, Erik bubble, plan, series, share card.
+- `dist/config.js`, `dist/analytics.js`, `dist/lead.js`, `dist/avatar.js`: presenter config, event tracking, contact forms, photo pixelator and share card.
+- `dist/arcade/arcade-core.js`: shared mini-game runtime; `dist/arcade/*.js` the four games; `dist/arcade/*.html` their standalone pages; `dist/arcade/og/` share images.
+- `dist/audio.js`: original procedural retro soundtrack and cues.
+- `dist/style.css`, `dist/arcade/arcade.css`: presentation, reduced-motion support.
+- `dist/assets/`: original map and character artwork, Erik’s headshot.
+- `tests/story.test.mjs`: story model tests.
+- `docs/`: product notes and the press release draft.
 
 ## Education and scope
 
-The household, dollar amounts, characters, and property outcomes are fictional. Homebuying lessons link to CFPB sources reviewed September 5, 2026. Profiles personalize learning, not mortgage eligibility or credit scoring. The Credit Compass is a separately labeled series in development; credit-repair content is not part of this homebuying episode.
-
-No server accounts, CRM submission, lead-capture backend, or live AI dialogue is connected. Browser rendering, actual audio playback, and observed play time have not been tested in this session.
+The household, dollar amounts, characters, and property outcomes are fictional. Homebuying lessons link to CFPB, VA, and Arizona program sources reviewed September 8, 2026. Profiles personalize learning, not mortgage eligibility or credit scoring. The Credit Compass is a separately labeled series in development; the portal is a preview only. Photos are pixelated on the player’s device and never uploaded. Nothing is sent to Erik unless the player chooses to send it.
