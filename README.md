@@ -60,7 +60,7 @@ Open `http://localhost:8080`. The game uses JavaScript modules, so opening the H
 - `dist/profile.js`: character choices, profile validation, learning-plan rules, next-destination selection.
 - `dist/app.js`: map and movement engine, dialogue, arcade launcher, character setup and photo avatar, prologue, sound, Erik bubble, plan, series, share card.
 - `dist/config.js`, `dist/analytics.js`, `dist/lead.js`, `dist/avatar.js`: presenter config, event tracking, contact forms, photo pixelator and share card.
-- `dist/arcade/arcade-core.js`: shared mini-game runtime; `dist/arcade/*.js` the four games; `dist/arcade/*.html` their standalone pages; `dist/arcade/og/` share images.
+- `dist/arcade/arcade-core.js`: shared mini-game runtime; `dist/arcade/*.js` the four games; `dist/arcade/<game>/index.html` their standalone pages; `dist/arcade/og/` share images.
 - `dist/audio.js`: original procedural retro soundtrack and cues.
 - `dist/style.css`, `dist/arcade/arcade.css`: presentation, reduced-motion support.
 - `dist/assets/`: original map and character artwork, Erik’s headshot.

@@ -389,7 +389,7 @@ export function mountStandalone(game) {
   document.title = `${game.title} · Hearthvale Arcade`
   const root = document.querySelector('#arcade-root') || document.body
   const partnerLine = config.partner ? `<p class="small">Shared by ${esc(config.partner.name)}</p>` : ''
-  root.innerHTML = `<header class="arcade-top"><a class="brand" href="${esc(config.gameUrl)}" aria-label="The First Key"><span class="brandmark">⚿</span><span>THE FIRST KEY<small>HEARTHVALE ARCADE</small></span></a><a class="arcade-all" href="./">All games</a></header>
+  root.innerHTML = `<header class="arcade-top"><a class="brand" href="${esc(config.gameUrl)}" aria-label="The First Key"><span class="brandmark">⚿</span><span>THE FIRST KEY<small>HEARTHVALE ARCADE</small></span></a><a class="arcade-all" href="../">All games</a></header>
     <main class="arcade-page">
       <div class="arcade-stage" id="stage"></div>
       <aside class="arcade-side">

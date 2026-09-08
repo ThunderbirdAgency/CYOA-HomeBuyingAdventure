@@ -831,7 +831,7 @@ async function launchArcade(id, from) {
     openDialog(utility)
   } else $('#scene-location').textContent = `HEARTHVALE ARCADE · ${meta.title.toUpperCase()}`
   destroyArcade()
-  host.innerHTML = `<div class="arcade-host"><div class="arcade-host-top"><span class="eyebrow">${esc(meta.where.toUpperCase())} · BONUS GAME</span><button class="secondary" id="arcade-back">${inStory ? '← Back to the story' : '← All games'}</button></div><div id="arcade-mount"></div><p class="small">Coins you earn here join your pouch. Only a better run than your best adds more. <a href="arcade/${id}.html" target="_blank" rel="noopener">Open this game on its own page to share it ↗</a></p></div>`
+  host.innerHTML = `<div class="arcade-host"><div class="arcade-host-top"><span class="eyebrow">${esc(meta.where.toUpperCase())} · BONUS GAME</span><button class="secondary" id="arcade-back">${inStory ? '← Back to the story' : '← All games'}</button></div><div id="arcade-mount"></div><p class="small">Coins you earn here join your pouch. Only a better run than your best adds more. <a href="arcade/${id}/" target="_blank" rel="noopener">Open this game on its own page to share it ↗</a></p></div>`
   host.scrollTop = 0
   const back = () => {
     destroyArcade()
@@ -867,7 +867,7 @@ function showArcade() {
   document.querySelectorAll('[data-share]').forEach(
     (b) =>
       (b.onclick = async () => {
-        const url = new URL(`arcade/${b.dataset.share}.html`, location.href).href
+        const url = new URL(`arcade/${b.dataset.share}/`, location.href).href
         const g = GAMES[b.dataset.share]
         try {
           if (navigator.share) await navigator.share({ title: g.title, text: g.blurb + ' Can you beat my score?', url })
