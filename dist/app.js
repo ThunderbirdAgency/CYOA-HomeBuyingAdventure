@@ -1880,4 +1880,14 @@ syncSound()
 update()
 buildHeroArt()
 preparePresenter()
+// Debug harness, only with ?debug=1: lets a test render every scene under a made-up state and
+// check that no {{placeholder}} reaches a player as literal braces.
+if (config.analytics.debug)
+  window.__firstKeyDebug = {
+    interpolate,
+    getState: () => state,
+    setState: (s) => {
+      state = s
+    },
+  }
 openDialog(welcome)
