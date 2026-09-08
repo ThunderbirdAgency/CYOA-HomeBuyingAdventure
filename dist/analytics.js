@@ -43,7 +43,10 @@ export function track(name, props = {}) {
   bumpStat(name)
   try {
     if (Array.isArray(window.dataLayer)) window.dataLayer.push(event)
-    if (typeof window.gtag === 'function') window.gtag('event', name, props)
+    // trackConversion is the host page's bridge to its marketing tags (Google, Meta). It maps
+    // the meaningful events to standard conversions. Only the non-personal props above are sent.
+    if (typeof window.trackConversion === 'function') window.trackConversion(name, props)
+    else if (typeof window.gtag === 'function') window.gtag('event', name, props)
     if (typeof window.va === 'function') window.va('event', { name: 'game_' + name, data: props })
     if (config.analytics.endpoint) {
       const blob = new Blob([JSON.stringify(event)], { type: 'application/json' })
