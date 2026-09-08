@@ -25,6 +25,14 @@ const defaults = {
       'Erik Miller NMLS #263103 · AZ LO-0927960 · Patriot Home Mortgage is a dba of Belem Servicing LLC · Company NMLS #715386 · AZ NMLS #BK-976140 · Equal Housing Lender',
     tagline: 'The lender at the gate.',
   },
+  assistant: {
+    name: 'Albert Luc',
+    firstName: 'Albert',
+    role: 'Senior Support Specialist & Assistant Originator',
+    nmls: '1474341',
+    headshot: here('assets/albert.png'),
+    line: 'Erik’s right hand. Collects everything except money.',
+  },
   // Where the optional contact forms post. On erikmillerhlt.com this is the site's own lead API,
   // which forwards to GoHighLevel. Anywhere else, post cross-origin to the same API.
   leadEndpoint: ON_HLT ? '/api/lead/' : 'https://www.erikmillerhlt.com/api/lead/',
@@ -70,6 +78,7 @@ if (config.partner && !config.partner.name) config.partner = null
 
 export const presenter = config.presenter
 export const partner = config.partner
+export const assistant = config.assistant
 
 // Fictional payment change from extra down payment. Standard amortization, no taxes or insurance.
 export function monthlyFor(principal, rate = config.fictional.rate, years = config.fictional.years) {

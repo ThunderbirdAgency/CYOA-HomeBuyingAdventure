@@ -2817,3 +2817,123 @@ footer b {
 .bubble-say { transition: opacity 0.4s, transform 0.4s; }
 .erik-bubble.quiet .bubble-say { opacity: 0; transform: translateY(6px); pointer-events: none; }
 .weather, .map-title, .world-shade, .compass { pointer-events: none; }
+/* Albert: documents and support */
+.map-doc {
+  position: absolute;
+  width: 18px;
+  height: 22px;
+  margin: -11px 0 0 -9px;
+  background: #f4efe0;
+  border: 1px solid #8a7a5a;
+  border-radius: 2px;
+  box-shadow: 0 2px 0 #3b2a1a, 0 0 14px #fff6d599;
+  animation: doc-float 2s ease-in-out infinite;
+  z-index: 2;
+  pointer-events: none;
+}
+.map-doc::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  top: 4px;
+  height: 2px;
+  background: #8a7a5a;
+  box-shadow: 0 4px 0 #8a7a5a, 0 8px 0 #8a7a5a, 0 12px 0 #c9b98a;
+}
+.map-doc::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translate(-50%, 4px);
+  white-space: nowrap;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: #f0f0df;
+  background: #132d27dd;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+@keyframes doc-float {
+  50% { transform: translateY(-3px) rotate(-4deg); }
+}
+.map-doc.taken {
+  animation: coin-take 0.7s ease-out forwards;
+}
+.world.zoomed .map-doc { width: 10px; height: 12px; margin: -6px 0 0 -5px; }
+.world.zoomed .map-doc::before { top: 2px; height: 1px; box-shadow: 0 2px 0 #8a7a5a, 0 4px 0 #8a7a5a; left: 2px; right: 2px; }
+.world.zoomed .map-doc::after { font-size: 5px; padding: 1px 3px; }
+.albert-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #0e2621;
+}
+.albert-card img {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 2px solid #8aa3ff;
+  image-rendering: pixelated;
+  flex: none;
+}
+.albert-card .eyebrow {
+  font-size: 10px;
+  color: #b9c8ff;
+}
+.albert-card p {
+  margin: 4px 0 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #d9dccb;
+}
+.albert-card .secondary {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.albert-hint-list li {
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+.doc-list {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 6px;
+}
+.doc-list div {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #0e2621;
+}
+.doc-list div.got {
+  border-color: #b9c8ff88;
+}
+.doc-list b {
+  display: block;
+  font-family: "Space Grotesk", sans-serif;
+}
+.doc-list small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.doc-list .doc-mark {
+  width: 22px;
+  text-align: center;
+  color: #b9c8ff;
+  flex: none;
+}
+.character .portrait.albert {
+  border-color: #8aa3ff;
+}
+@media (prefers-reduced-motion: reduce) {
+  .map-doc { animation: none !important; }
+}

@@ -66,6 +66,12 @@ export const sources = {
     url: 'https://www.homein5.org/',
     note: 'Up to 5% assistance for down payment and closing costs, with an additional 1% for eligible buyers. Confirm current rules.',
   },
+  preapproval: {
+    title: 'Get a preapproval letter',
+    publisher: 'Consumer Financial Protection Bureau',
+    url: 'https://www.consumerfinance.gov/owning-a-home/explore/get-a-preapproval-letter/',
+    note: 'What lenders look at, the documents they may ask for, and what a preapproval letter does and does not promise.',
+  },
   downPayment: {
     title: 'Determine your down payment',
     publisher: 'Consumer Financial Protection Bureau',
@@ -161,6 +167,13 @@ export const items = [
     text: 'You earned a clearer next step, not a mortgage approval.',
   },
   {
+    id: 'satchel',
+    symbol: '▣',
+    title: 'The Ready Satchel',
+    text: 'Albert’s five documents, gathered before anyone asked. Half of pre-approval is having these ready.',
+    bonus: true,
+  },
+  {
     id: 'rune',
     symbol: '◎',
     title: 'The Compass Rune',
@@ -183,6 +196,15 @@ export const mapCoins = [
   { id: 'c10', x: 55, y: 78 },
   { id: 'c11', x: 14, y: 88 },
   { id: 'c12', x: 8, y: 30 },
+]
+
+// Albert's scattered paperwork. Appears after he asks for help; walk over each to collect it.
+export const mapDocs = [
+  { id: 'paystub', label: 'Pay stubs', x: 19, y: 57, why: 'Recent pay stubs show current income.' },
+  { id: 'w2', label: 'W-2s', x: 47, y: 38, why: 'Two years of W-2s (or tax returns if self-employed) show income history.' },
+  { id: 'bank', label: 'Bank statements', x: 69, y: 19, why: 'Statements show savings for the down payment, closing costs, and reserves.' },
+  { id: 'photoid', label: 'Photo ID', x: 91, y: 52, why: 'A government ID confirms who is applying.' },
+  { id: 'tax', label: 'Tax returns', x: 41, y: 88, why: 'Returns fill in the income picture, especially for bonuses or self-employment.' },
 ]
 
 // A hidden spot on the map. Not a quest location; finding it is its own reward.
@@ -604,8 +626,67 @@ export const episode = {
       choices: [
         c('What programs help buyers in Arizona?', 'arizona', 'Down payment help, VA, FHA, and what to ask.'),
         c('What would you ask me first?', 'lender-questions', 'Three questions, none of them scary.'),
+        c('Say hello to {{assistantFirst}}.', 'albert', 'Erik’s right hand is in the castle keep, sorting papers.'),
         c('I’m ready to choose my next step.', 'bridge-choice', 'Back to Rowan and the bridge.'),
       ],
+    },
+    albert: {
+      speaker: '{{assistantName}} · Erik’s right hand',
+      symbol: '▣',
+      title: 'Welcome to the Loan Castle keep.',
+      text: [
+        `Inside the gate tower, past a wall of neatly labeled shelves, someone is sorting a stack of papers with a grin. “You made it! I’m {{assistantName}}. Erik does the lending. I do everything that makes the lending go smoothly, and I answer the phone when it rings at nine at night.”`,
+        `“Everybody who knows Erik knows me. I collect things. Pay stubs, W-2s, bank statements, ID, tax returns. I collect everything except money; the money stays in your pouch.”`,
+        `“{{docsStatus}}”`,
+      ],
+      choices: [
+        c('What exactly do you collect?', 'albert-docs', 'The five documents a lender usually asks for.'),
+        c('Help me gather them.', 'albert-quest', 'A scavenger hunt across Hearthvale.'),
+        c('Back to Erik.', 'lender'),
+      ],
+    },
+    'albert-docs': {
+      speaker: '{{assistantName}} · Erik’s right hand',
+      symbol: '▣',
+      title: 'Five papers, one folder.',
+      text: [
+        `{{assistantFirst}} pulls a clean folder off the shelf and labels five tabs. “When you are ready to get pre-approved, these are what a lender usually asks to see. Not today. But the earlier they are in one place, the faster the real conversation goes.”`,
+        `“A pre-approval letter is a lender saying, based on what you showed us, here is what we expect to lend. It is not a promise until underwriting finishes, and it does not decide what payment feels comfortable. That part is still yours.”`,
+      ],
+      widget: 'documents',
+      lesson:
+        'Gather pay stubs, W-2s or tax returns, bank statements, and photo ID before you ask for pre-approval. A preapproval letter is an estimate, not a final approval.',
+      source: 'preapproval',
+      choices: [
+        c('Help me gather them.', 'albert-quest', 'A scavenger hunt across Hearthvale.'),
+        c('Back to Erik.', 'lender'),
+      ],
+    },
+    'albert-quest': {
+      speaker: '{{assistantName}} · Erik’s right hand',
+      symbol: '▣',
+      title: 'The great paperwork gust.',
+      text: [
+        `“Here is the thing,” {{assistantFirst}} says, lowering his voice. “A gust came through the keep this morning and my practice folder went everywhere. Five papers, all over Hearthvale. A pay stub by the cottage road, a W-2 near the pond, bank statements up by the tower, a photo ID out on the lane, tax returns down by the farm.”`,
+        `“Walk over each one and it is yours. Bring all five back and I will pack you a satchel that is ready before anyone asks for it. Take your time. I have been chasing paperwork for years; I am very patient.”`,
+      ],
+      choices: [c('I’ll find them.', '@close', 'The papers are marked on the map now.')],
+    },
+    'albert-done': {
+      speaker: '{{assistantName}} · Erik’s right hand',
+      symbol: '▣',
+      title: 'All five. You are officially organized.',
+      text: [
+        `{{assistantFirst}} jogs out of the keep to meet you, already holding a folder open. Pay stubs, W-2s, bank statements, photo ID, tax returns, each one slid into its tab. “Do you know how many people show up to a first meeting with none of these? You are ahead of the game, and the game is only ten minutes old.”`,
+        `He hands you a small canvas satchel with a brass clasp and drops a few coins in the outside pocket. “The satchel is for the documents. The coins are because Erik said so. Money still is not my department.”`,
+        `“When it is the real thing, send me a note through Erik and I will tell you exactly which versions of each we need. Pre-approval is a folder and a conversation. You already have the folder.”`,
+      ],
+      lesson:
+        'Keep your documents in one place and current. When you ask for pre-approval, a good team tells you exactly which versions they need.',
+      source: 'preapproval',
+      item: 'satchel',
+      coins: 15,
+      choices: [c('Back to Hearthvale.', '@close', 'Bonus complete.')],
     },
     arizona: {
       speaker: '{{presenterName}} · the lender at the gate',
@@ -744,6 +825,8 @@ export const journalLessons = {
   homes: 'I practiced responding to a repair finding, including negotiating or preparing longer.',
   gate: 'I chose a next step I can take outside the adventure.',
   portal: 'I previewed the Credit Compass: read my reports for free, dispute errors in writing, and ignore guaranteed-score promises.',
+  albert:
+    'I met Albert and gathered the five documents a lender usually asks for: pay stubs, W-2s, bank statements, photo ID, and tax returns.',
   arizona:
     'I learned that Arizona down payment assistance, VA, and FHA programs exist and that a licensed lender can tell me which apply.',
 }
@@ -768,6 +851,9 @@ export function initialState() {
     coinsCollected: [],
     minigames: {},
     portal: 'hidden', // hidden → found → open
+    albertMet: false,
+    docQuest: 'hidden', // hidden → active → complete
+    docs: [],
     visitedArizona: false,
     lead: {},
     avatar: null,
@@ -781,6 +867,12 @@ export function collectMapCoin(state, id) {
   if (!mapCoins.some((c) => c.id === id) || state.coinsCollected.includes(id)) return false
   state.coinsCollected.push(id)
   addCoins(state, 3)
+  return true
+}
+export function collectDoc(state, id) {
+  if (state.docQuest !== 'active' || !mapDocs.some((d) => d.id === id) || state.docs.includes(id)) return false
+  state.docs.push(id)
+  if (state.docs.length === mapDocs.length) state.docQuest = 'complete'
   return true
 }
 /** Record a mini-game result; only improvements over the best previous run add coins. */
@@ -812,6 +904,8 @@ export function enter(state, node) {
   }
   if (node.ending) state.ended = true
   if (state.node === 'arizona') state.visitedArizona = true
+  if (state.node === 'albert') state.albertMet = true
+  if (state.node === 'albert-quest' && state.docQuest === 'hidden') state.docQuest = 'active'
   return state
 }
 export function restoreState(raw) {
@@ -826,18 +920,30 @@ export function restoreState(raw) {
   s.inventory = (Array.isArray(raw.inventory) ? raw.inventory : []).filter((id) =>
     items.some((i) => i.id === id),
   )
-  s.vars = { ...initialState().vars, ...raw.vars }
+  s.vars = { ...initialState().vars, ...(raw.vars && typeof raw.vars === 'object' ? raw.vars : {}) }
+  for (const k of ['housing', 'reserve']) s.vars[k] = Number.isFinite(Number(s.vars[k])) ? Number(s.vars[k]) : initialState().vars[k]
+  for (const k of Object.keys(s.vars)) if (typeof s.vars[k] === 'string') s.vars[k] = s.vars[k].replace(/[^\w-]/g, '').slice(0, 40)
   s.player = { x: 30, y: 76, facing: 1, ...raw.player }
   s.history = []
   s.coins = Math.max(0, Math.round(Number(raw.coins) || 0))
   s.coinsCollected = (Array.isArray(raw.coinsCollected) ? raw.coinsCollected : []).filter((id) =>
     mapCoins.some((c) => c.id === id),
   )
-  s.minigames = raw.minigames && typeof raw.minigames === 'object' ? raw.minigames : {}
+  s.minigames = {}
+  if (raw.minigames && typeof raw.minigames === 'object')
+    for (const [k, v] of Object.entries(raw.minigames))
+      if (/^[a-z-]{1,40}$/.test(k) && v && typeof v === 'object')
+        s.minigames[k] = { score: Math.max(0, Math.round(Number(v.score) || 0)), coins: Math.max(0, Math.round(Number(v.coins) || 0)), plays: Math.max(0, Math.round(Number(v.plays) || 0)) }
   s.portal = ['hidden', 'found', 'open'].includes(raw.portal) ? raw.portal : 'hidden'
   s.visitedArizona = raw.visitedArizona === true
+  s.albertMet = raw.albertMet === true
+  s.docQuest = ['hidden', 'active', 'complete'].includes(raw.docQuest) ? raw.docQuest : 'hidden'
+  s.docs = (Array.isArray(raw.docs) ? raw.docs : []).filter((id) => mapDocs.some((d) => d.id === id))
   s.lead = raw.lead && typeof raw.lead === 'object' ? raw.lead : {}
-  s.avatar = typeof raw.avatar === 'string' && raw.avatar.startsWith('data:image/png;base64,') && raw.avatar.length < 60000 ? raw.avatar : null
+  s.avatar =
+    typeof raw.avatar === 'string' && raw.avatar.length < 60000 && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(raw.avatar)
+      ? raw.avatar
+      : null
   if (
     raw.version === 1 &&
     (raw.done.includes('archive') || ['archive', 'shortcut', 'dispute', 'archive-end'].includes(raw.node))

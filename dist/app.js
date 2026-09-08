@@ -6,6 +6,7 @@ import {
   episodes,
   teaserPins,
   mapCoins,
+  mapDocs,
   secretSpots,
   journalLessons,
   initialState,
@@ -14,11 +15,12 @@ import {
   enter,
   restoreState,
   collectMapCoin,
+  collectDoc,
   recordMinigame,
 } from './story-data.js'
 import { AdventureAudio } from './audio.js'
 import { heroes, profileOptions, cleanProfile, learningPlan, nextLocation } from './profile.js'
-import { config, presenter, partner, coinsToDollars, coinsToMonthlySavings } from './config.js'
+import { config, presenter, partner, assistant, coinsToDollars, coinsToMonthlySavings } from './config.js'
 import { track, trackOnce } from './analytics.js'
 import { requestLead, contactLinks } from './lead.js'
 import { pixelate, shareCard } from './avatar.js'
@@ -39,6 +41,7 @@ let state = initialState(),
   reading = false,
   toastTimer,
   erikPixel = presenter.headshot,
+  albertPixel = assistant.headshot,
   activeArcade = null
 try {
   const raw = JSON.parse(localStorage.getItem(KEY))
@@ -116,6 +119,15 @@ function vars() {
     presenterFirst: presenter.firstName,
     presenterRole: presenter.role.toLowerCase(),
     presenterCompany: presenter.company,
+    assistantName: assistant.name,
+    assistantFirst: assistant.firstName,
+    docsLeft: mapDocs.length - state.docs.length,
+    docsStatus:
+      state.docQuest === 'complete'
+        ? 'You brought back all five. That satchel is the best-organized thing in Hearthvale.'
+        : state.docQuest === 'active'
+          ? `${mapDocs.length - state.docs.length} of my papers are still out there. Walk over them and they are yours.`
+          : 'Speaking of collecting: I could use a hand with something.',
     agentName: partner?.name || 'Nell',
     partnerLine: partner ? ` “${partner.name} and I work together, so when you are ready, we both already know your story.”` : '',
     portalDelivery: !portalLead
@@ -169,8 +181,58 @@ async function preparePresenter() {
   } catch {
     erikPixel = presenter.headshot
   }
+  try {
+    const cached = sessionStorage.getItem('choicewright:albert-pixel')
+    albertPixel = cached || (await pixelate(assistant.headshot, { size: 40, scale: 6, focus: 'top' }))
+    if (!cached) sessionStorage.setItem('choicewright:albert-pixel', albertPixel)
+  } catch {
+    albertPixel = assistant.headshot
+  }
   renderBubble()
+  renderAlbert()
 }
+
+/* ---------- Albert: in-game support ---------- */
+function albertHint() {
+  if (!state.started) return 'Create your adventurer and I will point you to the first stop.'
+  const next = nextLocation(state, locations, unlocked)
+  const coinsLeft = mapCoins.length - state.coinsCollected.length
+  if (state.docQuest === 'active') return `${mapDocs.length - state.docs.length} of my papers are still out on the map. They are the little white sheets.`
+  if (state.ended && state.portal !== 'open') return 'Finished already? Off the marked paths, near the waterfall, something is humming.'
+  if (state.ended && !state.albertMet) return 'Come find me in the castle keep. Erik will point you in.'
+  if (state.ended) return `${coinsLeft ? coinsLeft + ' path coins are still out there, and' : 'Every path coin is found, and'} the arcade always takes another run.`
+  if (state.done.includes('homes')) return 'Erik is at the gate, and I am right behind him in the keep. Come say hi.'
+  if (next?.id === 'lookout') return 'The tower opens once you have the compass and the lens. Ellis is waiting.'
+  if (coinsLeft > 8 && state.done.length > 1) return 'Walk the paths instead of jumping straight to a place. There are coins on them.'
+  return next ? `Next stop: ${next.name}. Press E or tap ● when you are close.` : 'You are doing great. Keep going.'
+}
+function renderAlbert() {
+  $('#albert-face').src = albertPixel
+  $('#albert-hint').textContent = albertHint()
+}
+function askAlbert() {
+  track('albert_open')
+  const tips = [
+    ['Moving', 'Walk with W A S D or the arrows, tap the map, or use the d-pad on a phone. Press E or tap ● near a glowing place to enter it.'],
+    ['Coins', `${mapCoins.length - state.coinsCollected.length} of ${mapCoins.length} path coins are still on the map. Each is 3 coins. The arcade games pay up to 40 each; only a better run than your best adds more.`],
+    ['Right now', albertHint()],
+  ]
+  if (state.docQuest === 'active') tips.push(['My papers', `Still missing: ${mapDocs.filter((d) => !state.docs.includes(d.id)).map((d) => d.label).join(', ')}.`])
+  if (state.ended) tips.push(['After the key', 'Your buying plan is in the Series panel and the objective bar. You can send it to Erik, or download it and keep it.'])
+  utilityView(
+    'ASK ALBERT',
+    `<div class="plan-erik"><img src="${albertPixel}" alt="" width="56" height="56" style="border-color:#8aa3ff"><div><strong>${esc(assistant.name)}</strong><small>${esc(assistant.role)} · ${esc(presenter.company)} · NMLS #${esc(assistant.nmls)}. ${esc(assistant.line)}</small></div></div><h2>What can I help with?</h2><ul class="albert-hint-list">${tips.map(([t, d]) => `<li><b>${esc(t)}:</b> ${esc(d)}</li>`).join('')}</ul><div class="utility-actions"><button class="primary" id="albert-go">${state.ended ? 'Open my buying plan' : 'Take me to my next stop'} →</button><button class="secondary" id="albert-erik">Ask ${esc(presenter.firstName)} a real question</button></div><p class="small">Albert answers inside the game. For a question about your own situation, the button sends it to ${esc(presenter.firstName)} and Albert, who read every message.</p>`,
+  )
+  $('#albert-go').onclick = () => {
+    utility.close()
+    goNext()
+  }
+  $('#albert-erik').onclick = () => {
+    utility.close()
+    $('#bubble-ask').click()
+  }
+}
+$('#ask-albert').onclick = askAlbert
 
 /* ---------- map, pins, coins, secrets ---------- */
 function update() {
@@ -216,6 +278,13 @@ function update() {
     .filter((c) => !state.coinsCollected.includes(c.id))
     .map((c) => `<span class="map-coin" data-coin="${c.id}" style="left:${c.x}%;top:${c.y}%;animation-delay:${(c.x * 7) % 10 / 10}s"></span>`)
     .join('')
+  $('#docs').innerHTML =
+    state.docQuest === 'active'
+      ? mapDocs
+          .filter((d) => !state.docs.includes(d.id))
+          .map((d) => `<span class="map-doc" data-doc="${d.id}" data-label="${esc(d.label)}" style="left:${d.x}%;top:${d.y}%;animation-delay:${(d.x % 7) / 7}s"></span>`)
+          .join('')
+      : ''
   $('#secrets').innerHTML = secretSpots
     .map(
       (s) =>
@@ -249,8 +318,14 @@ function update() {
     ? `${money(coinsToDollars(state.coins))} of fictional down payment · about ${money(coinsToMonthlySavings(state.coins))}/mo lower payment`
     : 'Walk the paths and play the arcade to fill your pouch.'
   position()
-  $('#map-hint').textContent = state.ended ? 'Your first key is earned. The arcade and the portal are still open.' : `Next: ${next?.name || 'explore the town'}`
+  $('#map-hint').textContent =
+    state.docQuest === 'active'
+      ? `Albert’s papers: ${state.docs.length}/${mapDocs.length} found`
+      : state.ended
+        ? 'Your first key is earned. The arcade and the portal are still open.'
+        : `Next: ${next?.name || 'explore the town'}`
   renderBubble()
+  renderAlbert()
 }
 
 /* ---------- movement engine ---------- */
@@ -320,7 +395,8 @@ function step(ts) {
     dx = target.x - state.player.x
     dy = target.y - state.player.y
     const d = Math.hypot(dx, dy)
-    if (d < SPEED * dt) {
+    // Arrive when within a step, or when already standing there (first frame has dt ≈ 0).
+    if (d < Math.max(0.6, SPEED * dt)) {
       state.player.x = target.x
       state.player.y = target.y
       const cb = onArrive
@@ -393,6 +469,32 @@ function checkCoins() {
       update()
     }
   }
+  if (state.docQuest === 'active')
+    for (const d of mapDocs) {
+      if (state.docs.includes(d.id)) continue
+      if (Math.hypot(d.x - state.player.x, (d.y - state.player.y) * 0.75) < 3.8) {
+        collectDoc(state, d.id)
+        const el = document.querySelector(`[data-doc="${d.id}"]`)
+        if (el) {
+          el.classList.add('taken')
+          setTimeout(() => el.remove(), 700)
+        }
+        music.effect('reward')
+        track('doc_pickup', { doc: d.id, found: state.docs.length })
+        save()
+        update()
+        if (state.docQuest === 'complete') {
+          toast('All five documents found! Albert is running over.')
+          setTimeout(() => {
+            state.location = 'gate'
+            state.history = []
+            renderNode('albert-done')
+          }, 700)
+          return
+        }
+        toast(`${d.label} found · ${d.why}`)
+      }
+    }
   for (const s of secretSpots) {
     if (state.portal === 'hidden' && Math.hypot(s.x - state.player.x, (s.y - state.player.y) * 0.75) < s.radius) {
       state.portal = 'found'
@@ -544,7 +646,7 @@ function widget(type) {
   if (type === 'monthly')
     return `<div class="numbers"><div><small>CHOSEN HOUSING BUDGET</small><strong>${money(state.vars.housing)}/mo</strong></div><div><small>AFTER EXPENSES &amp; SAVINGS GOAL</small><strong>${money(3400 - state.vars.housing)}/mo</strong></div></div>`
   if (type === 'reserve')
-    return `<div class="budget-control"><label for="reserve-range">Keep in my emergency pouch</label><input type="range" id="reserve-range" min="0" max="4000" step="500" value="${state.vars.reserve}"><output id="reserve-output" for="reserve-range">${money(state.vars.reserve)} reserved · ${money(4000 - state.vars.reserve)} for furniture</output></div>`
+    return `<div class="budget-control"><label for="reserve-range">Keep in my emergency pouch</label><input type="range" id="reserve-range" min="0" max="4000" step="500" value="${Math.max(0, Math.min(4000, Number(state.vars.reserve) || 0))}"><output id="reserve-output" for="reserve-range">${money(state.vars.reserve)} reserved · ${money(4000 - state.vars.reserve)} for furniture</output></div>`
   if (type === 'roadmap')
     return `<ol class="buying-roadmap"><li><b>Prepare</b><span>Understand your budget and options.</span></li><li><b>Gather your team</b><span>Discuss representation and financing.</span></li><li><b>Find a home</b><span>Compare homes and make an offer.</span></li><li><b>Check the details</b><span>Inspections, financing, and contract deadlines.</span></li><li><b>Close &amp; move in</b><span>Review documents and complete the purchase.</span></li></ol>`
   if (type === 'repair')
@@ -554,6 +656,8 @@ function widget(type) {
       extra = coinsToDollars(state.coins)
     return `<div class="numbers three"><div><small>YOUR COIN POUCH</small><strong>◉ ${state.coins}</strong><p class="small">1 coin = $100 fictional down payment</p></div><div><small>EXTRA DOWN PAYMENT</small><strong>${money(extra)}</strong><p class="small">On a fictional ${money(base)} home</p></div><div><small>PAYMENT CHANGE</small><strong>−${money(coinsToMonthlySavings(state.coins))}/mo</strong><p class="small">30-year fixed at ${(config.fictional.rate * 100).toFixed(2)}%, principal &amp; interest only</p></div></div>`
   }
+  if (type === 'documents')
+    return `<div class="doc-list">${mapDocs.map((d) => `<div class="${state.docs.includes(d.id) ? 'got' : ''}"><span class="doc-mark">${state.docs.includes(d.id) ? '✓' : '▣'}</span><div><b>${esc(d.label)}</b><small>${esc(d.why)}</small></div></div>`).join('')}</div>`
   if (type === 'arizona')
     return `<div class="az-notes"><div><b>Home Plus</b><span>Arizona IDA · statewide</span><p>Up to 4% down payment and closing cost assistance.</p><a href="${sources.homePlus.url}" target="_blank" rel="noopener noreferrer">homeplusaz.com ↗</a></div><div><b>Home in Five Advantage</b><span>Maricopa County</span><p>Up to 5% assistance, plus 1% more for eligible buyers.</p><a href="${sources.homeInFive.url}" target="_blank" rel="noopener noreferrer">homein5.org ↗</a></div><div><b>VA-backed loans</b><span>Veterans, service members, survivors</span><p>Most buy with no down payment. A funding fee applies.</p><a href="${sources.va.url}" target="_blank" rel="noopener noreferrer">va.gov ↗</a></div><div><b>FHA loans</b><span>Lower down payment</span><p>Available to buyers with lower credit scores; mortgage insurance applies.</p><a href="${sources.loanTypes.url}" target="_blank" rel="noopener noreferrer">CFPB loan options ↗</a></div></div><p class="small">Program terms change and each has income, purchase-price, and education requirements. ${esc(presenter.name)} is licensed in ${esc(presenter.licensedIn)} and can confirm what applies to you.</p>`
   return ''
@@ -561,6 +665,7 @@ function widget(type) {
 function speakerPortrait(node) {
   const s = node.speaker || ''
   if (s.startsWith('{{presenterName}}')) return `<img class="portrait" src="${erikPixel}" alt="">`
+  if (s.startsWith('{{assistantName}}')) return `<img class="portrait albert" src="${albertPixel}" alt="">`
   if (s.startsWith('{{name}}')) return portraitHtml('portrait hero-portrait')
   return `<span class="sigil">${node.symbol}</span>`
 }
@@ -581,7 +686,7 @@ function renderNode(id) {
   update()
   track('scene', { node: id })
   const loc = locations.find((l) => l.id === state.location)
-  $('#scene-location').textContent = `${loc ? loc.name : 'Off the marked paths'} · ${node.ending ? 'JOURNEY COMPLETE' : id.startsWith('portal') || id.startsWith('ledger') ? 'THE CREDIT COMPASS · PREVIEW' : 'THE FIRST KEY'}`
+  $('#scene-location').textContent = `${id.startsWith('albert') ? 'The Loan Castle keep' : loc ? loc.name : 'Off the marked paths'} · ${node.ending ? 'JOURNEY COMPLETE' : id.startsWith('portal') || id.startsWith('ledger') ? 'THE CREDIT COMPASS · PREVIEW' : 'THE FIRST KEY'}`
   const game = node.minigame && GAMES[node.minigame]
   const best = node.minigame && state.minigames[node.minigame]
   $('#story-body').innerHTML =
@@ -661,6 +766,8 @@ function gameContext(kind) {
     plan_focus: plan.title,
     plan_done: state.planTasks.join(', '),
     visited_arizona_notes: state.visitedArizona ? 'yes' : 'no',
+    met_albert: state.albertMet ? 'yes' : 'no',
+    documents_gathered: state.docs.length + '/' + mapDocs.length,
     portal: state.portal,
   }
 }
@@ -668,8 +775,8 @@ $('#back-scene').onclick = () => {
   if (!state.history.length) return
   const history = [...state.history],
     previous = JSON.parse(history.pop())
-  const { profile, avatar, coins, coinsCollected, minigames, lead, portal } = state
-  state = { ...previous, profile, avatar, coins, coinsCollected, minigames, lead, portal, history }
+  const { profile, avatar, coins, coinsCollected, minigames, lead, portal, albertMet, docQuest, docs } = state
+  state = { ...previous, profile, avatar, coins, coinsCollected, minigames, lead, portal, albertMet, docQuest, docs, history }
   renderNode(state.node)
 }
 $('#close-story').onclick = closeStory
@@ -838,7 +945,7 @@ $('#close-utility').onclick = () => {
 utility.addEventListener('cancel', () => destroyArcade())
 const MAIN_SOURCES = ['budget', 'loans', 'inspection', 'downPayment']
 function showSources(only) {
-  const entries = only ? [[only, sources[only]]] : Object.entries(sources).filter(([id]) => MAIN_SOURCES.includes(id) || (state.visitedArizona && ['homePlus', 'homeInFive', 'va', 'loanTypes'].includes(id)) || (state.portal === 'open' && ['credit', 'dispute'].includes(id)))
+  const entries = only ? [[only, sources[only]]] : Object.entries(sources).filter(([id]) => MAIN_SOURCES.includes(id) || (state.visitedArizona && ['homePlus', 'homeInFive', 'va', 'loanTypes'].includes(id)) || (state.portal === 'open' && ['credit', 'dispute'].includes(id)) || (state.albertMet && id === 'preapproval'))
   utilityView(
     'THE FACTS BEHIND THE ADVENTURE',
     `<h2>Fantasy world. Grounded lessons.</h2><p>Characters, prices, households, and outcomes are fictional. Educational claims are linked to these public resources. Reviewed September 8, 2026. This is introductory education, not a loan offer, credit-score forecast, or individual financial advice.</p>${entries.map(([id, s]) => `<div class="source-card"><a href="${s.url}" target="_blank" rel="noopener noreferrer">${s.title} ↗</a><small>${s.publisher} · ${s.note}</small></div>`).join('')}<p class="small">Your gameplay stays in this browser unless you choose to send a message to ${esc(presenter.name)}. There is no credit pull, report upload, or application in this game. Read-aloud uses your browser’s voice service when available.</p><p class="small">${esc(presenter.legal)}</p>`,
@@ -850,6 +957,7 @@ const nextSteps = () => learningPlan(state.profile).tasks.map((t) => t.title + '
 function journalText() {
   const lessons = [...state.done.map((id) => locations.find((l) => l.id === id).quest.toUpperCase() + '\n' + journalLessons[id])]
   if (state.visitedArizona) lessons.push('ARIZONA FIELD NOTES\n' + journalLessons.arizona)
+  if (state.docQuest === 'complete') lessons.push('ALBERT’S READY SATCHEL\n' + journalLessons.albert)
   if (state.portal === 'open') lessons.push('THE CREDIT COMPASS (PREVIEW)\n' + journalLessons.portal)
   return [
     'THE FIRST KEY — MY FIELD JOURNAL',
@@ -901,6 +1009,7 @@ function downloadJournal() {
 function showJournal() {
   const entries = state.done.map((id) => `<div class="journal-entry"><h3>${locations.find((l) => l.id === id).quest}</h3><p>${journalLessons[id]}</p></div>`)
   if (state.visitedArizona) entries.push(`<div class="journal-entry bonus"><h3>Arizona field notes</h3><p>${journalLessons.arizona}</p></div>`)
+  if (state.docQuest === 'complete') entries.push(`<div class="journal-entry bonus"><h3>Albert’s Ready Satchel</h3><p>${journalLessons.albert}</p></div>`)
   if (state.portal === 'open') entries.push(`<div class="journal-entry bonus"><h3>The Credit Compass · preview</h3><p>${journalLessons.portal}</p></div>`)
   utilityView(
     'YOUR FIELD JOURNAL',
@@ -921,8 +1030,8 @@ function showJournal() {
         `<h2>Start a fresh adventure?</h2><p>This replaces the saved journey on this device. Your adventurer, photo, coins, and arcade bests stay with you. Download your current field journal first if you want to keep it.</p><div class="utility-actions"><button id="confirm-restart" class="primary">Start fresh</button><button id="cancel-restart" class="secondary">Keep my journey</button></div>`,
       )
       $('#confirm-restart').onclick = () => {
-        const { profile, avatar, coins, coinsCollected, minigames, lead, portal } = state
-        state = { ...initialState(), profile, avatar, coins, coinsCollected, minigames, lead, portal, started: true }
+        const { profile, avatar, coins, coinsCollected, minigames, lead, portal, albertMet, docQuest, docs } = state
+        state = { ...initialState(), profile, avatar, coins, coinsCollected, minigames, lead, portal, albertMet, docQuest, docs, started: true }
         save()
         utility.close()
         update()
@@ -1048,7 +1157,7 @@ try {
 function bubbleLine() {
   if (!state.started) return `Hi, I’m ${presenter.firstName}. I’m the only real person in Hearthvale.`
   if (state.ended) return 'Nice work on that key. Want me to read your plan before we talk?'
-  if (state.node === 'lender' || state.node === 'arizona') return 'The flag on the gate is mine. Ask me anything.'
+  if (state.node === 'lender' || state.node === 'arizona') return 'The flag on the gate is mine. Ask me anything, and say hi to Albert in the keep.'
   if (state.done.includes('homes')) return 'Roof leak, huh? Come see me at the gate.'
   if (state.done.includes('market')) return 'Good pouch. Keep it separate from the down payment.'
   return 'Stuck on the numbers? I’m the lender at the gate.'
@@ -1069,7 +1178,7 @@ function renderBubble() {
   }
   $('#bubble-name').textContent = presenter.name
   $('#bubble-role').textContent = `${presenter.role} · ${presenter.company} · NMLS #${presenter.nmls}`
-  $('#bubble-blurb').textContent = `${presenter.tagline} Straight answers, no pressure, licensed in ${presenter.licensedIn}. Call, text, or send a question from the game.`
+  $('#bubble-blurb').textContent = `${presenter.tagline} Straight answers, no pressure, licensed in ${presenter.licensedIn}. ${assistant.firstName} and I both read every message. Call, text, or send a question from the game.`
   const links = contactLinks()
   $('#bubble-call').href = links.call
   $('#bubble-call').textContent = `Call ${presenter.phone}`
@@ -1189,7 +1298,7 @@ $('#next-destination').onclick = goNext
 function howToPlay() {
   utilityView(
     'YOUR FIRST QUEST',
-    `<h2>From rent day to your first key.</h2><p>Your long-term adventure is buying a home. This opening quest is a short practice run that unlocks your personal buying plan.</p><ol class="how-steps"><li><b>Collect three tools.</b> Visit the provisioner, the guild, and the mapmaker’s tower.</li><li><b>Face your first house decision.</b> Visit Three-Door Lane and work through a repair surprise.</li><li><b>Meet the lender at the gate.</b> ${esc(presenter.firstName)} is the one real person in town. Reach the bridge to earn your First Key.</li></ol><div class="lesson"><small>HOW TO MOVE</small>Walk with <kbd>W A S D</kbd> or the arrows, or tap anywhere on the map. Press <kbd>E</kbd> or tap ● near a glowing place to enter it. Walk over coins to collect them. Something off the marked paths is humming.</div><div class="lesson"><small>COINS</small>Path coins and the four arcade games fill your pouch. At the gate, every coin becomes $100 of fictional down payment and you see what it does to a monthly payment.</div><p>There is no timer and no perfect score. Thoughtful choices, including deciding to prepare longer, move the story forward.</p><div class="utility-actions"><button class="primary" id="help-next">${state.ended ? 'Open my buying plan' : 'Take me to my next stop'} →</button><button class="secondary" id="replay-intro">Replay the opening</button></div>`,
+    `<h2>From rent day to your first key.</h2><p>Your long-term adventure is buying a home. This opening quest is a short practice run that unlocks your personal buying plan.</p><ol class="how-steps"><li><b>Collect three tools.</b> Visit the provisioner, the guild, and the mapmaker’s tower.</li><li><b>Face your first house decision.</b> Visit Three-Door Lane and work through a repair surprise.</li><li><b>Meet the lender at the gate.</b> ${esc(presenter.firstName)} and ${esc(assistant.firstName)} are the two real people in town. Reach the bridge to earn your First Key.</li></ol><div class="lesson"><small>HOW TO MOVE</small>Walk with <kbd>W A S D</kbd> or the arrows, or tap anywhere on the map. Press <kbd>E</kbd> or tap ● near a glowing place to enter it. Walk over coins to collect them. Something off the marked paths is humming.</div><div class="lesson"><small>COINS</small>Path coins and the four arcade games fill your pouch. At the gate, every coin becomes $100 of fictional down payment and you see what it does to a monthly payment.</div><p>There is no timer and no perfect score. Thoughtful choices, including deciding to prepare longer, move the story forward.</p><div class="utility-actions"><button class="primary" id="help-next">${state.ended ? 'Open my buying plan' : 'Take me to my next stop'} →</button><button class="secondary" id="replay-intro">Replay the opening</button></div>`,
   )
   $('#help-next').onclick = () => {
     utility.close()

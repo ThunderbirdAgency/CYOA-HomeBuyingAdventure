@@ -5,6 +5,7 @@ import {
   sources,
   items,
   mapCoins,
+  mapDocs,
   secretSpots,
   episodes,
   teaserPins,
@@ -15,6 +16,7 @@ import {
   restoreState,
   addCoins,
   collectMapCoin,
+  collectDoc,
   recordMinigame,
 } from '../dist/story-data.js'
 import { learningPlan, cleanProfile, nextLocation } from '../dist/profile.js'
@@ -45,6 +47,7 @@ function reach(id) {
 locations.forEach((l) => reach(l.start))
 secretSpots.forEach((s) => reach(s.start))
 reach('portal-open') // opened by the @portal-unlock action
+reach('albert-done') // opened when the last document is collected
 assert.equal(seen.size, Object.keys(nodes).length, 'all authored scenes reachable')
 for (const s of secretSpots) assert.ok(nodes[s.start], 'secret spot start exists')
 for (const p of teaserPins) assert.ok(episodes.some((e) => e.number === p.episode), 'teaser pin episode exists')
@@ -119,6 +122,30 @@ assert.equal(variants, 72)
   const portalNodes = new Set(['portal', 'portal-open', 'ledger', 'ledger-dispute'])
   for (const [id, n] of Object.entries(nodes))
     if (['credit', 'dispute', 'rebuild', 'ftc'].includes(n.source)) assert.ok(portalNodes.has(id), id)
+}
+
+/* ---------- Albert's document hunt ---------- */
+{
+  const s = initialState()
+  assert.equal(mapDocs.length, 5)
+  assert.ok(!collectDoc(s, 'paystub'), 'documents are not collectible before Albert asks')
+  follow(s, ['lender', 'albert', 'albert-docs', 'albert-quest'])
+  assert.ok(s.albertMet)
+  assert.equal(s.docQuest, 'active')
+  for (const d of mapDocs) assert.ok(collectDoc(s, d.id))
+  assert.ok(!collectDoc(s, 'paystub'), 'each document once')
+  assert.equal(s.docQuest, 'complete')
+  follow(s, ['albert-done'])
+  assert.ok(s.inventory.includes('satchel'))
+  assert.equal(s.coins, 15)
+  enter(s, nodes['albert-done'])
+  assert.equal(s.coins, 15, 'satchel coins awarded once')
+  assert.equal(s.done.length, 0, 'the hunt is a bonus, not a quest location')
+  const r = restoreState(JSON.parse(JSON.stringify(s)))
+  assert.equal(r.docQuest, 'complete')
+  assert.equal(r.docs.length, 5)
+  assert.ok(r.albertMet)
+  for (const d of mapDocs) assert.ok(!mapCoins.some((c) => Math.hypot(c.x - d.x, c.y - d.y) < 4), 'documents do not sit on coins')
 }
 
 /* ---------- coin economy ---------- */
@@ -223,5 +250,5 @@ assert.equal(restored.lead.plan, true)
 assert.equal(restoreState({ ...JSON.parse(JSON.stringify(s)), avatar: 'javascript:alert(1)' }).avatar, null)
 
 console.log(
-  `Passed: ${variants} full journey variants; all scene links, items, and sources; portal bonus; coin economy; profile plans; save migration v1/v2/v3.`,
+  `Passed: ${variants} full journey variants; all scene links, items, and sources; portal bonus; coin economy; profile plans; save migration v1/v2/v3; Albert's document hunt.`,
 )
