@@ -24,7 +24,7 @@
 //   P  paper / eye white    p  paper shadow    W  brass         w  brass shadow
 //   *  lantern glow
 
-export const CHARACTER_VERSION = 'char-2026-09-08.2'
+export const CHARACTER_VERSION = 'char-2026-09-09.1'
 
 /* ------------------------------------------------------------------ geometry */
 
@@ -694,30 +694,54 @@ function paintFace(ctx, g, cells, face, scale, ox, oy, tint) {
   ctx.beginPath()
   for (const [x, y] of cells) ctx.rect(ox + x * scale, oy + y * scale, scale, scale)
   ctx.clip()
-  // Cover the face box, cropping the photo rather than squashing it.
-  const dw = box.w * scale
-  const dh = box.h * scale
-  // Overscan a little so the eyes and mouth land inside the visible mask rather than at its edge.
-  const s = Math.max(dw / fw, dh / fh) * 1.16
-  const w = fw * s
-  const h = fh * s
-  ctx.imageSmoothingEnabled = true
-  if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(
-    face,
-    Math.round(ox + box.x * scale + (dw - w) / 2),
-    Math.round(oy + box.y * scale + (dh - h) / 2),
-    Math.round(w),
-    Math.round(h),
-  )
-  // A whisper of the character's own skin tone so the photo belongs to the palette.
-  if (tint) {
-    ctx.globalAlpha = 0.14
-    ctx.fillStyle = tint
-    ctx.fillRect(ox + box.x * scale, oy + box.y * scale, dw, dh)
-    ctx.globalAlpha = 1
+
+  // Reduce the photo to exactly one colour per sprite pixel of the face, then blow that back up
+  // with smoothing off. The face ends up drawn on the character's own pixel grid — the same size
+  // of block as their hair and their boots — instead of a smooth photograph inside a pixel head.
+  // Overscan a little first so the eyes and mouth land inside the mask rather than at its edge.
+  const s = Math.max(box.w / fw, box.h / fh) * 1.18
+  const sw = Math.max(1, Math.round(fw * s))
+  const sh = Math.max(1, Math.round(fh * s))
+  const tiny = makeCanvas(box.w, box.h)
+  const tctx = tiny.getContext('2d')
+  tctx.imageSmoothingEnabled = true
+  if ('imageSmoothingQuality' in tctx) tctx.imageSmoothingQuality = 'high'
+  tctx.drawImage(face, Math.round((box.w - sw) / 2), Math.round((box.h - sh) / 2), sw, sh)
+
+  // At this size every pixel is doing a lot of work, so lift the contrast around the face's own
+  // average before tinting: it is what keeps eyes and a mouth legible in a ten-pixel-wide face.
+  {
+    const d = tctx.getImageData(0, 0, box.w, box.h)
+    const px = d.data
+    let mean = 0
+    for (let i = 0; i < px.length; i += 4) mean += 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2]
+    mean /= px.length / 4
+    const [tr, tg, tb] = tint ? hexRgb(tint) : [0, 0, 0]
+    for (let p = 0; p < px.length / 4; p++) {
+      const i = p * 4
+      const cx = p % box.w
+      const cy = (p - cx) / box.w
+      // The outer ring of the crop is usually the photo's background rather than the face, so it
+      // melts into the character's own skin instead of showing a stripe of somebody's wall.
+      const edge = cx === 0 || cy === 0 || cx === box.w - 1 || cy === box.h - 1
+      const mix = tint ? (edge ? 0.62 : 0.14) : 0
+      for (let k = 0; k < 3; k++) {
+        let v = mean + (px[i + k] - mean) * 1.45
+        v += ([tr, tg, tb][k] - v) * mix
+        px[i + k] = Math.max(0, Math.min(255, v))
+      }
+    }
+    tctx.putImageData(d, 0, 0)
   }
+
+  ctx.imageSmoothingEnabled = false
+  ctx.drawImage(tiny, ox + box.x * scale, oy + box.y * scale, box.w * scale, box.h * scale)
   ctx.restore()
+}
+
+function hexRgb(hex) {
+  const n = parseInt(String(hex).replace('#', ''), 16)
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
 }
 
 function paintGrid(ctx, g, opts) {

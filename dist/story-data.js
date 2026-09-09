@@ -364,6 +364,23 @@ export const episode = {
       ],
       complete: 'cottage',
     },
+    'papers-fetch': {
+      speaker: 'Your cottage · the drawer by the kettle',
+      symbol: '▣',
+      title: 'Everything he asked for, in one folder.',
+      text: [
+        `They are exactly where you left them, in the drawer that sticks: pay stubs, two years of W-2s, bank statements, your photo ID, last year’s tax returns. You square the stack, tuck the folder under your arm, and pull the door shut behind you.`,
+        `Halfway down the cottage road, Hearthvale takes a breath.`,
+        `The Augusta wind comes over the ridge the way it does every autumn — one enormous shove — and the folder leaves your arm like a startled bird. Paper goes everywhere: over the market awning, out along the lane, up towards the tower. You stand in the road holding one empty cardboard folder and watching your entire financial life go sailing over the rooftops.`,
+      ],
+      lesson:
+        'Keep the five documents a lender asks for in one place and current: pay stubs, W-2s or tax returns, bank statements, and photo ID. The wind is fictional. Losing an afternoon to hunting for them is not.',
+      source: 'preapproval',
+      scatter: true,
+      choices: [
+        c('Go after them.', '@close', 'They are on your map now. Albert will know what each one is.'),
+      ],
+    },
     'cottage-again': {
       speaker: 'Your cottage · rented, for now',
       symbol: '✉',
@@ -798,10 +815,11 @@ export const episode = {
       ],
       widget: 'documents',
       source: 'preapproval',
+      askPapers: true,
       choices: [
         c('Write me the letter.', 'preapproval-done', 'Both boxes ticked.', {}, { when: 'preapproval-ready' }),
-        c('Go and get the missing piece.', '@close', 'The gate stays open until you do.', {}, { when: 'preapproval-blocked' }),
-        c('Ask {{assistantFirst}} about the paperwork.', 'albert', 'He knows where everything went.'),
+        c('I’ll go home and get my papers.', '@close', 'They are in the drawer by the kettle.', {}, { when: 'preapproval-blocked' }),
+        c('Ask {{assistantFirst}} about the paperwork.', 'albert', 'He is the one who knows what each page is for.'),
       ],
     },
     'preapproval-done': {
@@ -1094,29 +1112,30 @@ export const episode = {
     'albert-quest': {
       speaker: '{{assistantName}} · the paperwork wizard',
       symbol: '▣',
-      title: 'The Augusta wind.',
+      title: 'Right. Let’s go and get them back.',
       text: [
-        `“Here is the thing,” {{assistantFirst}} says, nodding toward the window. “The Augusta wind came through Hearthvale this morning. It does that every autumn. It blew your cottage window open and I watched your paperwork go sailing over the rooftops: pay stubs, W-2s, bank statements, your photo ID, your tax returns. All five.”`,
-        `“Good news: I was watching. I know where every one of them landed.” He unfolds your map and marks five spots. “A pay stub on the cottage road, a W-2 by the pond, bank statements up near the tower, your ID out on the lane, tax returns down by the farm. Walk over each one and it is yours again. I will keep the tally.”`,
-        `“Bring them back and I will pack you a satchel that is ready before anyone asks for it. Take your time. I have been chasing paperwork for other people for years; I am very good at it.”`,
+        `“{{docHelpOpen}}”`,
+        `{{assistantFirst}} is already unfolding your map on the counter and weighting the corners with a mug. “The wind always drops things in the same sorts of places — porches, hedges, the pond rail. I have marked where I would look. Walk over each one and it is back in your hands.”`,
+        `“And here is the part I am actually for,” he says. “You are going to pick up a page and not know what it is or why anyone wants it. Find it, and I will tell you exactly what it does. Then bring them all back to me — all five, into the folder, in order — and {{presenterFirst}} can read them the same afternoon instead of a fortnight on Tuesday.”`,
       ],
-      choices: [c('I’ll go get them.', '@close', 'Your papers are marked on the map now.')],
+      choices: [c('I’ll go and find them.', '@close', 'Your papers are marked on the map now.')],
     },
     'albert-done': {
       speaker: '{{assistantName}} · the paperwork wizard',
       symbol: '▣',
       title: 'All five. Not a page missing.',
       text: [
-        `{{assistantFirst}} meets you at the keep door with a folder already open. Pay stubs, W-2s, bank statements, photo ID, tax returns: he checks each one against his list and slides it into its tab. “That is everything the wind took. Do you know how many people show up to a first meeting with none of these? You are ahead of the game, and the game is only ten minutes old.”`,
-        `He hands you a small canvas satchel with a brass clasp and drops a few coins in the outside pocket. “The satchel is for the documents. Keep them in it, keep them current, and the Augusta wind can do whatever it likes. The coins are because Erik said so. Money still is not my department.”`,
-        `“When it is the real thing, Erik and I will tell you exactly which versions of each we need. Pre-approval is a folder and a conversation. You already have the folder.”`,
+        `You come back through the keep door with your arms full and a leaf in your hair, and {{assistantFirst}} is standing there with the folder already open, five tabs labelled, in the order a lender reads them.`,
+        `He takes them one at a time and says what each one is as it goes in. Pay stubs: what you earn now. W-2s: that you have earned it for a while. Bank statements: that the down payment and the closing costs are real and yours. Photo ID: that you are you. Tax returns: the whole picture, especially if any of your income is bonus or self-employed.`,
+        `“That is everything the wind took.” He hands you a canvas satchel with a brass clasp and drops a few coins in the outside pocket. “The satchel is so this never happens twice. Keep them in it and keep them current. {{presenterFirst}} has what he needs now — go and get your letter.”`,
       ],
       lesson:
-        'Keep your documents in one place and current. When you ask for pre-approval, a good team tells you exactly which versions they need.',
+        'Half of a pre-approval is having the documents in one place before anyone asks. A good team tells you exactly which versions they need, and takes them off your hands.',
       source: 'preapproval',
       item: 'satchel',
       coins: 15,
-      choices: [c('Back to Hearthvale.', '@close', 'Bonus complete.')],
+      filed: true,
+      choices: [c('Go and see {{presenterFirst}}.', 'preapproval', 'Both boxes ticked now.')],
     },
     arizona: {
       speaker: '{{presenterName}} · the lender at the gate',
@@ -1285,7 +1304,9 @@ export function initialState() {
     portal: 'hidden', // hidden → found → open
     albertMet: false,
     metPercival: false, // you have been to the open house on Three-Door Lane
-    docQuest: 'hidden', // hidden → active → complete
+    // hidden → asked (Erik wants your papers) → active (the wind has them) → gathered (you have
+    // them all, in your arms) → complete (Albert has them and Erik can read them)
+    docQuest: 'hidden',
     docs: [],
     // Who is on your side, and how far the purchase has got.
     agent: null, // null | 'percival' | 'wren' | 'dashiell'
@@ -1314,7 +1335,8 @@ export function collectMapCoin(state, id) {
 export function collectDoc(state, id) {
   if (state.docQuest !== 'active' || !mapDocs.some((d) => d.id === id) || state.docs.includes(id)) return false
   state.docs.push(id)
-  if (state.docs.length === mapDocs.length) state.docQuest = 'complete'
+  // Finding the last one is not the end of it. They are in your arms, not in Albert's folder.
+  if (state.docs.length === mapDocs.length) state.docQuest = 'gathered'
   return true
 }
 /** Record a mini-game result; only improvements over the best previous run add coins. */
@@ -1346,14 +1368,15 @@ export function nextStep(state) {
   if (!state.preapproved) {
     if (!state.done.includes('market'))
       return { id: 'market', hint: 'Mira first. Work out the number you can actually live with.' }
-    if (state.docQuest !== 'complete')
-      return {
-        id: 'gate',
-        hint: state.docQuest === 'active'
-          ? 'Your paperwork is scattered across Hearthvale. Walk over each sheet, then see Albert.'
-          : 'See Albert in the keep. The Augusta wind took something of yours this morning.',
-      }
-    return { id: 'gate', hint: 'Budget set, papers found. Go and get your pre-approval letter.' }
+    if (state.docQuest === 'hidden')
+      return { id: 'gate', hint: 'See Erik at the gate. He will tell you what he needs from you.' }
+    if (state.docQuest === 'asked')
+      return { id: 'cottage', hint: 'Erik wants your paperwork. It is at home, in the drawer by the kettle.' }
+    if (state.docQuest === 'active')
+      return { id: null, hint: 'The Augusta wind has your papers. Walk over each one on the map to pick it up.' }
+    if (state.docQuest === 'gathered')
+      return { id: 'gate', hint: 'You have all five. Carry them back to Albert in the keep.' }
+    return { id: 'gate', hint: 'Budget set, papers filed. Go and get your pre-approval letter.' }
   }
   if (state.offer !== 'accepted')
     return {
@@ -1390,7 +1413,10 @@ export function blockedBecause(state, loc) {
 export function startFor(state, loc) {
   switch (loc.id) {
     case 'cottage':
-      return state.done.includes('cottage') ? 'cottage-again' : 'wake'
+      if (!state.done.includes('cottage')) return 'wake'
+      // Erik asked for your paperwork, and this is where it lives.
+      if (state.docQuest === 'asked') return 'papers-fetch'
+      return 'cottage-again'
     case 'homes':
       if (state.offer === 'accepted') {
         // Once the roof question is settled — or you waived the right to ask it — the lane is
@@ -1406,7 +1432,8 @@ export function startFor(state, loc) {
     case 'market':
       return state.done.includes('market') ? 'market-again' : 'market'
     case 'gate':
-      return 'castle'
+      // Walking back in with an armful of paper: Albert is expecting you.
+      return state.docQuest === 'gathered' ? 'albert-done' : 'castle'
     default:
       return loc.start
   }
@@ -1497,7 +1524,11 @@ export function enter(state, node) {
   if (state.node === 'arizona') state.visitedArizona = true
   if (state.node === 'albert') state.albertMet = true
   if (state.node === 'openhouse') state.metPercival = true
-  if (state.node === 'albert-quest' && state.docQuest === 'hidden') state.docQuest = 'active'
+  // The lender asks for the papers; the cottage is where you fetch them; the wind is what
+  // happens on the way back.
+  if (node.askPapers && state.docQuest === 'hidden') state.docQuest = 'asked'
+  if (node.scatter && (state.docQuest === 'hidden' || state.docQuest === 'asked')) state.docQuest = 'active'
+  if (node.filed) state.docQuest = 'complete'
   return state
 }
 export function restoreState(raw) {
@@ -1557,7 +1588,7 @@ export function restoreState(raw) {
   s.visitedArizona = raw.visitedArizona === true
   s.albertMet = raw.albertMet === true
   s.metPercival = raw.metPercival === true
-  s.docQuest = ['hidden', 'active', 'complete'].includes(raw.docQuest) ? raw.docQuest : 'hidden'
+  s.docQuest = ['hidden', 'asked', 'active', 'gathered', 'complete'].includes(raw.docQuest) ? raw.docQuest : 'hidden'
   s.docs = (Array.isArray(raw.docs) ? raw.docs : []).filter((id) => mapDocs.some((d) => d.id === id))
   s.lead = raw.lead && typeof raw.lead === 'object' ? raw.lead : {}
   s.avatar =

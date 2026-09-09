@@ -73,6 +73,8 @@ export class AdventureAudio {
   effect(kind = 'step') {
     if (!this.on) return
     const t = this.ctx.currentTime
+    // 'page' is the soft tick of a scene advancing one beat: quieter and shorter than a choice.
+    if (kind === 'page') return this.tone(83, t, 0.07, 'triangle', 0.14)
     const notes =
       kind === 'reward' ? [72, 76, 79, 84] : kind === 'finish' ? [72, 76, 79, 84, 83, 86, 88] : [76, 81]
     notes.forEach((n, i) => this.tone(n, t + i * 0.09, 0.23, 'triangle', 0.35))

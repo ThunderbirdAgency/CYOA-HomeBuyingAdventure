@@ -51,19 +51,11 @@
           <div class="world" id="world" tabindex="0" aria-label="Hearthvale map. Use arrow keys or W A S D to walk, E to enter a nearby place. You can also select any unlocked destination, or tap the map to walk there.">
             <div class="world-layer" id="layer">
               <img src="assets/hearthvale.webp" alt="An enchanted pixel-art town with forest trails, a market, a tower, houses, and a castle bridge to a new beginning." id="map-image" draggable="false" />
-              <div class="castle-flag" aria-hidden="true">
-                <svg viewBox="0 0 120 70" width="120" height="70">
-                  <rect x="4" y="4" width="3" height="66" fill="#3b2a1a" /><rect x="5" y="2" width="1" height="68" fill="#8a6a3a" /><circle cx="5.5" cy="3" r="2.5" fill="#efd08a" />
-                  <path class="flag-cloth" fill="#061744" d="M8 6 Q30 2 52 6 T96 6 L96 34 Q74 38 52 34 T8 34 Z">
-                    <animate attributeName="d" dur="1.6s" repeatCount="indefinite" values="M8 6 Q30 2 52 6 T96 6 L96 34 Q74 38 52 34 T8 34 Z;M8 6 Q30 10 52 6 T96 6 L96 34 Q74 30 52 34 T8 34 Z;M8 6 Q30 2 52 6 T96 6 L96 34 Q74 38 52 34 T8 34 Z" />
-                  </path>
-                  <path fill="#fb8122" d="M8 34 Q30 30 52 34 T96 34 L96 40 Q74 44 52 40 T8 40 Z">
-                    <animate attributeName="d" dur="1.6s" repeatCount="indefinite" values="M8 34 Q30 30 52 34 T96 34 L96 40 Q74 44 52 40 T8 40 Z;M8 34 Q30 38 52 34 T96 34 L96 40 Q74 36 52 40 T8 40 Z;M8 34 Q30 30 52 34 T96 34 L96 40 Q74 44 52 40 T8 40 Z" />
-                  </path>
-                  <text x="52" y="17" text-anchor="middle" font-family="'Press Start 2P','Courier New',monospace" font-size="7" fill="#f0f0df">PATRIOT</text>
-                  <text x="52" y="28" text-anchor="middle" font-family="'Press Start 2P','Courier New',monospace" font-size="5.2" fill="#efd08a">HOME MORTGAGE</text>
-                  <g class="flag-star" fill="#efd08a"><path d="M104 12 l1.6 3.4 3.7.4-2.8 2.5.8 3.7-3.3-1.9-3.3 1.9.8-3.7-2.8-2.5 3.7-.4z" /></g>
-                </svg>
+              <!-- The lender's office. The Patriot sign used to be a flagpole planted in open grass; it
+                   hangs on the building now, and the building stands beside the road to the castle. -->
+              <div class="lender-office" aria-hidden="true">
+                <img src="assets/lender-office.webp" alt="" width="240" height="245" />
+                <span class="office-sign"><b>PATRIOT</b><i>HOME MORTGAGE</i></span>
               </div>
               <div id="secrets"></div>
               <div id="docs"></div>
@@ -95,6 +87,14 @@
             <button data-dir="right" aria-label="Walk right">▶</button>
             <button data-dir="down" aria-label="Walk down">▼</button>
           </div>
+        </section>
+        <section id="story" class="story story-dock" aria-label="Conversation" hidden>
+          <div class="story-top">
+            <span id="scene-location" class="eyebrow"></span>
+            <div><button id="story-volume" aria-label="Volume controls" title="Volume">♫</button><button id="narrate" aria-pressed="false" title="Read this scene aloud" aria-label="Read this scene aloud">◖</button><button id="close-story" aria-label="Return to map">✕</button></div>
+          </div>
+          <div class="story-body" id="story-body"></div>
+          <div class="story-bottom"><button id="back-scene">↶ Previous choice</button><span id="scene-count"></span><button id="scene-source">Fact check ↗</button></div>
         </section>
         <aside class="quest-panel">
           <div class="quest-top"><span class="eyebrow" id="player-label">YOUR ADVENTURE</span><span class="tag">CHAPTER 1</span></div>
@@ -150,14 +150,6 @@
         <button class="quiet" id="quiet">Play without sound</button>
         <p class="fine">A fictional adventure with real-world lessons, presented by Erik Miller, Patriot Home Mortgage. No financial information needed to play.</p>
       </div>
-    </dialog>
-    <dialog id="story" class="story">
-      <div class="story-top">
-        <span id="scene-location" class="eyebrow"></span>
-        <div><button id="story-volume" aria-label="Volume controls">♫ Volume</button><button id="narrate" aria-pressed="false" title="Read this scene aloud">◖ Read aloud</button><button id="close-story" aria-label="Return to map">✕</button></div>
-      </div>
-      <div class="story-body" id="story-body"></div>
-      <div class="story-bottom"><button id="back-scene">↶ Previous choice</button><span id="scene-count"></span><button id="scene-source">Fact check ↗</button></div>
     </dialog>
     <dialog id="setup" class="setup"><div id="setup-body"></div></dialog>
     <dialog id="prologue" class="prologue"><div id="prologue-body"></div></dialog>

@@ -1970,10 +1970,6 @@ select:focus {
   width: 24px;
   height: 33px;
 }
-.world.zoomed .castle-flag svg {
-  width: 70px;
-  height: 41px;
-}
 .world.zoomed .enter-hint {
   font-size: 9px;
 }
@@ -2138,18 +2134,6 @@ select:focus {
 .secret.open i {
   background: var(--gold);
   box-shadow: 0 0 8px var(--gold);
-}
-.castle-flag {
-  position: absolute;
-  left: 66.5%;
-  top: 44%;
-  z-index: 2;
-  pointer-events: none;
-  filter: drop-shadow(0 4px 4px #00000088);
-}
-.castle-flag svg {
-  width: 120px;
-  height: 70px;
 }
 .flag-star {
   animation: twinkle-star 1.2s ease-in-out infinite;
@@ -2808,12 +2792,10 @@ footer b {
 .world.zoomed .hero-token.avatar { width: 24px; height: 24px; }
 .world.zoomed #traveler i { width: 12px; height: 3px; }
 .world.zoomed .secret { width: 22px; height: 22px; margin: -11px 0 0 -11px; }
-.world.zoomed .castle-flag svg { width: 60px; height: 35px; }
 .world.zoomed .enter-hint { font-size: 7px; padding: 3px 5px; }
 .world.zoomed .dust { width: 5px; height: 5px; }
 .world.zoomed .map-title, .world.zoomed .weather, .world.zoomed .compass { display: none; }
-.castle-flag svg { width: 150px; height: 88px; }
-.castle-flag { left: 65.5%; top: 41%; }
+  .lender-office { width: 12%; }
 .bubble-say { transition: opacity 0.4s, transform 0.4s; }
 .erik-bubble.quiet .bubble-say { opacity: 0; transform: translateY(6px); pointer-events: none; }
 .weather, .map-title, .world-shade, .compass { pointer-events: none; }
@@ -3112,3 +3094,426 @@ footer b {
   color: #b9cfc6;
 }
 .fiction-note b { color: #f4ead2; }
+
+/* ================= v2.5: the story happens beside the town, not on top of it =================
+   The scene used to be a modal that covered the map, so every conversation stopped the game and
+   hid the world. It is a docked column now: the map stays exactly where it is, your character
+   stays standing where they stopped, and the words arrive one beat at a time next to them. */
+.game-layout.talking {
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 30%);
+}
+.game-layout.talking .quest-panel {
+  display: none;
+}
+.story-dock {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-height: min(76vh, 720px);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel, #0e2621);
+  box-shadow: 0 18px 40px -26px #000a;
+  overflow: hidden;
+  animation: dock-in 0.26s ease-out both;
+}
+.story-dock[hidden] {
+  display: none;
+}
+@keyframes dock-in {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: none; }
+}
+.story-dock .story-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+/* The dock is narrower than the old modal, so the scene furniture comes down a size. */
+.story-dock .story-body h2 {
+  font-size: clamp(20px, 2.4vw, 26px);
+  line-height: 1.2;
+}
+.story-dock .prose p {
+  font-size: 15px;
+  line-height: 1.62;
+}
+.story-dock .numbers {
+  grid-template-columns: 1fr;
+}
+.story-dock .numbers.three {
+  grid-template-columns: 1fr;
+}
+.story-dock .agent-list {
+  grid-template-columns: 1fr;
+}
+
+/* One beat at a time. A scene reveals a paragraph per tap, so the town is never behind a wall
+   of text — the choices only appear once the last beat has landed. */
+.beat-more {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #122c26;
+  color: #dff0e8;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+}
+.beat-more:hover {
+  background: #1a3a32;
+  border-color: #3f6a5c;
+}
+.beat-more .beat-caret {
+  margin-left: auto;
+  color: var(--gold, #efcc79);
+  animation: beat-nudge 1.2s ease-in-out infinite;
+}
+.beat-count {
+  color: var(--muted);
+  font-size: 12px;
+}
+@keyframes beat-nudge {
+  50% { transform: translateX(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .beat-more .beat-caret { animation: none; }
+  .story-dock { animation: none; }
+}
+
+/* Narrow screens: the town keeps the top of the screen and the conversation sits under it. */
+@media (max-width: 1080px) {
+  .game-layout.talking {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .story-dock {
+    max-height: none;
+  }
+}
+/* Each new beat fades in where the last one left off. */
+.beat-new {
+  animation: beat-in 0.26s ease-out both;
+}
+@keyframes beat-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .beat-new { animation: none; }
+}
+
+/* ================= v2.5: the opening — you are asleep, and then you are not =================
+   The apartment at six in the morning, rebuilt from the original opening: the art, the Z's, the
+   noise through the walls, the landlord letting himself in, and the receipt that prices a month
+   of rent in hours worked. */
+.opening {
+  position: relative;
+  background: #0a1913;
+}
+.opening-scene {
+  position: relative;
+  height: min(58vh, 460px);
+  min-height: 280px;
+  background: url(assets/apartment.webp) center 42% / cover no-repeat;
+  image-rendering: pixelated;
+  overflow: hidden;
+}
+.opening-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 45%, #0a1913f2);
+  pointer-events: none;
+}
+/* The sleeper is in the art, over on the left. The Z's rise off the pillow. */
+.sleep-z {
+  position: absolute;
+  left: 9%;
+  top: 27%;
+  font: bold 22px "Press Start 2P", monospace;
+  font-size: 20px;
+  color: #ffdf97;
+  text-shadow: 0 2px 0 #00000080;
+  animation: sleep-drift 2.4s ease-in-out infinite;
+}
+.noise-note {
+  position: absolute;
+  right: 6%;
+  top: 22%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #17251ed9;
+  border: 1px solid #3d5a4c;
+  color: #fff1d0;
+  font: 700 12px "Press Start 2P", monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  animation: noise-rattle 0.5s steps(2) infinite;
+}
+/* Bartleby, drawn in CSS so he can walk in without another asset. */
+.collector {
+  position: absolute;
+  left: 84%;
+  bottom: 14%;
+  width: 54px;
+  height: 92px;
+  opacity: 0;
+  transform: scaleX(-1);
+}
+.collector-coat {
+  position: absolute;
+  left: 8px;
+  bottom: 0;
+  width: 38px;
+  height: 58px;
+  border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(#7c3f6e, #5d2b52);
+  box-shadow: inset -6px 0 10px -6px #000, 0 2px 0 #2b1226;
+}
+.collector-hat {
+  position: absolute;
+  left: 12px;
+  bottom: 54px;
+  width: 30px;
+  height: 38px;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(#5d2b52, #431d3c);
+  box-shadow: 0 6px 0 -1px #f0c8a0, 0 8px 0 -1px #431d3c;
+}
+.collector-hat::after {
+  content: "";
+  position: absolute;
+  left: -7px;
+  bottom: -3px;
+  width: 44px;
+  height: 5px;
+  border-radius: 3px;
+  background: #2f1429;
+}
+.collector-ledger {
+  position: absolute;
+  left: 38px;
+  bottom: 26px;
+  width: 20px;
+  height: 15px;
+  border-radius: 2px;
+  background: #f6ecd2;
+  box-shadow: inset 0 0 0 2px #c8b78f, 0 2px 0 #00000040;
+}
+.rent-coin {
+  position: absolute;
+  left: 26%;
+  top: 40%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #4b2820e0;
+  color: #ffe0a5;
+  font: bold 15px "Space Grotesk", monospace;
+  opacity: 0;
+}
+.opening[data-scene="sleeping"] .collector,
+.opening[data-scene="sleeping"] .rent-coin,
+.opening[data-scene="gone"] .collector,
+.opening[data-scene="gone"] .rent-coin {
+  opacity: 0;
+}
+.opening:not([data-scene="sleeping"]) .sleep-z,
+.opening:not([data-scene="sleeping"]) .noise-note {
+  display: none;
+}
+.opening[data-scene="collector"] .collector {
+  animation: collector-walk 1.5s ease-out both;
+}
+.opening[data-scene="collector"] .rent-coin {
+  animation: coin-away 2.4s 1.3s both;
+}
+.opening[data-scene="gone"] .opening-scene {
+  filter: saturate(0.72) brightness(0.86);
+}
+@keyframes sleep-drift {
+  0%, 100% { transform: translateY(0); opacity: 0.65; }
+  50% { transform: translateY(-9px); opacity: 1; }
+}
+@keyframes noise-rattle {
+  50% { transform: translate(2px, -1px) rotate(-1deg); }
+}
+@keyframes collector-walk {
+  from { left: 96%; opacity: 0; }
+  30% { opacity: 1; }
+  to { left: 56%; opacity: 1; }
+}
+@keyframes coin-away {
+  0% { opacity: 0; transform: translateY(14px); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-58px); }
+}
+.opening-caption {
+  padding: 20px 26px 24px;
+  background: #0a1913;
+}
+.opening-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-bottom: 8px;
+}
+.opening-controls button {
+  color: #bfcdb6;
+  font-size: 13px;
+  padding: 5px 9px;
+}
+.opening-caption h2 {
+  margin: 6px 0 10px;
+  font-size: clamp(24px, 3.4vw, 38px);
+  line-height: 1.12;
+  color: #ffdf94;
+}
+.opening-caption p {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #d8e6dd;
+}
+.rent-receipt {
+  margin-top: 14px;
+  padding: 13px 16px;
+  border: 1px dashed #c8b78f88;
+  border-radius: 8px;
+  background: #12251d;
+}
+.rent-receipt strong {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: #efcc79;
+}
+.rent-receipt span {
+  display: block;
+  margin: 5px 0 3px;
+  font-size: 17px;
+  color: #f4ead2;
+}
+.rent-receipt small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.opening-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+}
+.opening-dots {
+  display: flex;
+  gap: 6px;
+}
+.opening-dots i {
+  width: 22px;
+  height: 4px;
+  border-radius: 2px;
+  background: #2c4a3f;
+}
+.opening-dots i.on {
+  background: #efcc79;
+}
+@media (max-width: 720px) {
+  .opening-scene { height: 40vh; min-height: 210px; }
+  .opening-caption { padding: 16px 18px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sleep-z, .noise-note { animation: none; }
+  .opening[data-scene="collector"] .collector { animation: none; opacity: 1; left: 56%; }
+  .opening[data-scene="collector"] .rent-coin { animation: none; opacity: 1; }
+}
+
+/* ============ v2.5: the lender's office ============
+   The Patriot Home Mortgage sign used to be a flag on a pole planted in the middle of a field.
+   It hangs off a building now — a little timber-framed office standing beside the road that
+   leads to the castle gate, with the sign board on its bracket. */
+.lender-office {
+  position: absolute;
+  left: 63.2%;
+  top: 51.5%;
+  width: 11%;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  z-index: 4;
+  filter: drop-shadow(0 6px 6px #0a1a1499);
+}
+.lender-office img {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+.office-sign {
+  /* The shop sign, hung on the bracket over the door. Painted over the blank board in the art
+     and a little larger than it, because a sign nobody can read is just a brown rectangle. */
+  position: absolute;
+  left: 57%;
+  top: 44%;
+  width: 48%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 4px;
+  line-height: 1.15;
+  text-align: center;
+  border-radius: 2px;
+  background: linear-gradient(#8c6234, #6b4726);
+  box-shadow: inset 0 0 0 1px #c49a5e, 0 2px 3px #0008;
+  color: #ffe9bd;
+}
+.office-sign b {
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(5px, 0.55vw, 9px);
+  letter-spacing: 0.04em;
+  color: #ffdf94;
+  text-shadow: 0 1px 0 #00000090;
+}
+.office-sign i {
+  font-family: "Press Start 2P", monospace;
+  font-style: normal;
+  font-size: clamp(3px, 0.31vw, 5px);
+  letter-spacing: 0.03em;
+  color: #e8d2a6;
+  margin-top: 2px;
+}
+.world.zoomed .lender-office {
+  width: 15%;
+}
+/* The dock is narrower than the old modal, so its header has to stop trying to be a toolbar. */
+.story-dock .story-top {
+  padding: 10px 14px;
+  gap: 8px;
+}
+.story-dock .story-top .eyebrow {
+  font-size: 9px;
+  letter-spacing: 1px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.story-dock .story-top > div {
+  flex: none;
+  gap: 4px;
+}
+.story-dock .story-top button {
+  padding: 4px 7px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.story-dock .story-bottom {
+  padding: 9px 14px;
+  font-size: 12px;
+}

@@ -75,6 +75,8 @@ function reach(id) {
   const stages = [
     initialState(),
     { ...initialState(), done: ['cottage', 'market'], metPercival: true },
+    { ...initialState(), done: ['cottage', 'market', 'guild'], agent: 'wren', docQuest: 'asked' },
+    { ...initialState(), done: ['cottage', 'market', 'guild'], agent: 'wren', docQuest: 'gathered', docs: mapDocs.map((d) => d.id) },
     { ...initialState(), done: ['cottage', 'market'], metPercival: true, agent: 'wren' },
     { ...initialState(), done: ['cottage', 'homes', 'market', 'guild'], agent: 'wren', preapproved: true },
     { ...initialState(), agent: 'wren', preapproved: true, offer: 'lost' },
@@ -147,10 +149,20 @@ function doTheBudget(s, reserve) {
   s.vars.reserve = reserve
   follow(s, ['market-end'])
 }
+// Erik asks, you go home for them, the wind takes them, you find them, you carry them back.
 function findTheDocuments(s) {
+  follow(s, ['castle', 'preapproval'])
+  assert.equal(s.docQuest, 'asked', 'the lender asking is what starts it')
+  assert.equal(startFor(s, locations.find((l) => l.id === 'cottage')), 'papers-fetch')
+  follow(s, ['papers-fetch'])
+  assert.equal(s.docQuest, 'active', 'the wind takes them on the way back')
   follow(s, ['castle', 'albert', 'albert-quest'])
   for (const d of mapDocs) assert.ok(collectDoc(s, d.id))
+  assert.equal(s.docQuest, 'gathered', 'finding them all is not the same as filing them')
+  assert.ok(!readyForPreapproval(s), 'papers in your arms are not papers in the folder')
+  assert.equal(startFor(s, locations.find((l) => l.id === 'gate')), 'albert-done', 'carry them back')
   follow(s, ['albert-done'])
+  assert.equal(s.docQuest, 'complete')
 }
 
 // Both first moves, both ways of getting an agent, every offer outcome, every repair response.
@@ -374,25 +386,34 @@ assert.equal(variants, 36)
 {
   const s = initialState()
   assert.equal(mapDocs.length, 5)
-  assert.ok(!collectDoc(s, 'paystub'), 'documents are not collectible before Albert marks the map')
+  assert.ok(!collectDoc(s, 'paystub'), 'documents are not collectible before the wind takes them')
+  follow(s, ['castle', 'preapproval'])
+  assert.equal(s.docQuest, 'asked')
+  assert.ok(!collectDoc(s, 'paystub'), 'nor while they are still in the drawer at home')
+  follow(s, ['papers-fetch'])
+  assert.equal(s.docQuest, 'active')
   follow(s, ['castle', 'albert', 'albert-docs', 'albert-quest'])
   assert.ok(s.albertMet)
-  assert.equal(s.docQuest, 'active')
   for (const d of mapDocs) assert.ok(collectDoc(s, d.id))
   assert.ok(!collectDoc(s, 'paystub'), 'each document once')
-  assert.equal(s.docQuest, 'complete')
+  assert.equal(s.docQuest, 'gathered')
   follow(s, ['albert-done'])
+  assert.equal(s.docQuest, 'complete')
   assert.ok(s.inventory.includes('satchel'))
   assert.equal(s.coins, 15)
   enter(s, nodes['albert-done'])
   assert.equal(s.coins, 15, 'satchel coins awarded once')
   assert.equal(s.done.length, 0, 'the hunt is a step on the way to the letter, not a place')
-  // The wind took the player's paperwork, not Albert's.
-  const albertProse = ['albert', 'albert-docs', 'albert-quest', 'albert-done']
+  // The wind took the player's own folder, out of the player's own arms, on the player's own
+  // errand. Albert is the one who helps get it back — he never loses anything.
+  const questProse = ['papers-fetch', 'albert', 'albert-docs', 'albert-quest', 'albert-done']
     .map((id) => nodes[id].text.join(' '))
     .join(' ')
-  assert.match(albertProse, /your paperwork|your cottage window|your papers/i)
-  assert.ok(!/lost (my|his) /i.test(albertProse), 'Albert never loses anything')
+  assert.match(nodes['papers-fetch'].text.join(' '), /the folder leaves your arm/i)
+  assert.match(questProse, /leaves your arm|your entire financial life|your photo ID/i)
+  assert.ok(!/lost (my|his) /i.test(questProse), 'Albert never loses anything')
+  assert.match(nodes['albert-quest'].text.join(' '), /I will tell you exactly what it does/i)
+  assert.match(nodes['albert-done'].text.join(' '), /bring|come back|arms full/i)
   const r = restoreState(JSON.parse(JSON.stringify(s)))
   assert.equal(r.docQuest, 'complete')
   assert.equal(r.docs.length, 5)

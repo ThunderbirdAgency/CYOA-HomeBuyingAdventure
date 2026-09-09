@@ -262,10 +262,18 @@ function vars() {
     docsLeft: mapDocs.length - state.docs.length,
     docsStatus:
       state.docQuest === 'complete'
-        ? 'You got all five back. That satchel is the best-organized thing in Hearthvale.'
-        : state.docQuest === 'active'
-          ? `${mapDocs.length - state.docs.length} of your papers are still out there. Walk over them and they are yours again. I am keeping the tally.`
-          : 'Speaking of which: the Augusta wind came through this morning, and I saw some papers fly out of your cottage window. Yours, I think. Want a hand?',
+        ? 'You got all five back and they are in the folder. That satchel is the best-organized thing in Hearthvale.'
+        : state.docQuest === 'gathered'
+          ? 'You have all five in your arms! Give them here and I will get them into the folder.'
+          : state.docQuest === 'active'
+            ? `${mapDocs.length - state.docs.length} still out there. Walk over each one and it is yours again — and I will tell you what it is.`
+            : state.docQuest === 'asked'
+              ? 'Erik has asked for your paperwork. It is at your cottage, in the drawer by the kettle. Go and get it and I will take it from there.'
+              : 'When Erik asks for your paperwork, come and find me. Knowing which page is which is the whole of my job.',
+    docHelpOpen:
+      state.docQuest === 'active' || state.docQuest === 'gathered'
+        ? 'The Augusta wind. It does that every autumn, and it has never once picked a good moment.'
+        : 'The Augusta wind got your folder on the way back up the hill, did it? It does that every autumn.',
     agentName: partner?.name || 'Nell',
     partnerLine: partner ? ` “${partner.name} and I work together, so when you are ready, we both already know your story.”` : '',
     portalDelivery: !portalLead
@@ -303,10 +311,18 @@ function stopNarration() {
   $('#narrate').textContent = '◖ Read aloud'
   music.duck(false)
 }
+function openStory() {
+  lastFocus = document.activeElement
+  story.hidden = false
+  document.querySelector('.game-layout').classList.add('talking')
+  camera() // the map just changed width; keep the walker centred in it
+}
 function closeStory() {
   stopNarration()
   destroyArcade()
-  story.close()
+  story.hidden = true
+  document.querySelector('.game-layout').classList.remove('talking')
+  camera()
   world.focus({ preventScroll: true })
 }
 
@@ -337,7 +353,9 @@ function albertHint() {
   if (!state.started) return 'Create your adventurer and I will point you to the first stop.'
   const step = nextStep(state)
   const coinsLeft = mapCoins.length - state.coinsCollected.length
-  if (state.docQuest === 'active') return `${mapDocs.length - state.docs.length} of your papers are still out on the map. Look for the little white sheets; I marked where each one landed.`
+  if (state.docQuest === 'asked') return 'Your papers are at home, in the drawer by the kettle. Fetch them and bring them to us.'
+  if (state.docQuest === 'active') return `${mapDocs.length - state.docs.length} of your papers are still out there. Look for the little white sheets; I marked where each one landed.`
+  if (state.docQuest === 'gathered') return 'You have all five! Bring them to me in the keep and I will get them into the folder.'
   if (state.ended && state.portal !== 'open') return 'Finished already? Off the marked paths, near the waterfall, something is humming.'
   if (state.ended) return `${coinsLeft ? coinsLeft + ' path coins are still out there, and' : 'Every path coin is found, and'} the arcade always takes another run.`
   if (coinsLeft > 8 && state.done.length > 1) return 'Walk the paths instead of jumping straight to a place. There are coins on them.'
@@ -700,16 +718,10 @@ function checkCoins() {
         track('doc_pickup', { doc: d.id, found: state.docs.length })
         save()
         update()
-        if (state.docQuest === 'complete') {
-          toast('All five recovered! Albert has the folder ready.')
-          setTimeout(() => {
-            state.location = 'gate'
-            state.history = []
-            renderNode('albert-done')
-          }, 700)
-          return
-        }
-        toast(`${d.label} found · ${d.why}`)
+        // Albert said he would tell you what each page is. This is him doing it.
+        toast(`${d.label} · ${d.why}`)
+        if (state.docQuest === 'gathered')
+          setTimeout(() => toast('That is all five. Take them back to Albert in the Loan Castle keep.'), 2600)
       }
     }
   for (const s of secretSpots) {
@@ -950,6 +962,9 @@ function speakerPortrait(node) {
       : portraitHtml('portrait hero-portrait')
   return `<span class="sigil">${node.symbol}</span>`
 }
+// How much of the current scene has been read. A scene arrives a beat at a time so the town is
+// never hidden behind a wall of text; the choices only appear once the last beat has landed.
+let sceneBeat = 0
 function renderNode(id) {
   stopNarration()
   destroyArcade()
@@ -966,20 +981,37 @@ function renderNode(id) {
   save()
   update()
   track('scene', { node: id })
+  sceneBeat = 0
+  paintScene()
+  openStory()
+}
+function paintScene() {
+  const id = state.node
+  const node = episode.nodes[id]
+  if (!node) return
   const loc = locations.find((l) => l.id === state.location)
   $('#scene-location').textContent = `${id.startsWith('albert') ? 'The Loan Castle keep' : loc ? loc.name : 'Off the marked paths'} · ${node.ending ? 'JOURNEY COMPLETE' : id.startsWith('portal') || id.startsWith('ledger') ? 'THE CREDIT COMPASS · PREVIEW' : 'THE FIRST KEY'}`
   const game = node.minigame && GAMES[node.minigame]
   const best = node.minigame && state.minigames[node.minigame]
+  const beats = node.text.length
+  const last = sceneBeat >= beats - 1
+  const shown = node.text.slice(0, sceneBeat + 1)
   $('#story-body').innerHTML =
-    `<div class="scene-enter">${node.ending ? '<div class="ending-seal">⚿</div>' : ''}<div class="character">${speakerPortrait(node)}${interpolate(node.speaker)}</div><h2>${interpolate(node.title)}</h2><div class="prose">${node.text.map((p) => `<p>${interpolate(p)}</p>`).join('')}</div>${node.widget ? widget(node.widget) : ''}${node.lesson ? `<div class="lesson"><small>PACK THIS FOR REAL LIFE</small>${node.lesson}</div>` : ''}${node.ending ? `<div class="complete-metrics"><span>${locations.length} places explored</span><span>${state.inventory.length} discoveries earned</span><span>◉ ${state.coins} coins</span></div>` : ''}${
-      game
-        ? `<button class="minigame-launch ${node.minigameLabel ? 'feature' : ''}" data-game="${node.minigame}"><span class="mg-icon">${game.icon}</span><span><strong>${node.minigameLabel || 'Bonus game: ' + game.title}</strong><small>${node.minigameBlurb || game.blurb}${best ? ` · Best ◉ ${best.coins}` : ' · Earn coins for your pouch'}</small></span><span>▶</span></button>`
-        : ''
-    }<div class="choices">${visibleChoices(node).map((c, i) => `<button class="choice" data-choice="${i}"><span>${i + 1}</span><div><strong>${interpolate(c.label)}</strong>${c.detail ? `<small>${interpolate(c.detail)}</small>` : ''}</div><span>→</span></button>`).join('')}</div></div>`
-  $('#story-body').scrollTop = 0
+    `<div class="scene-enter">${node.ending ? '<div class="ending-seal">⚿</div>' : ''}<div class="character">${speakerPortrait(node)}${interpolate(node.speaker)}</div><h2>${interpolate(node.title)}</h2><div class="prose">${shown.map((p, i) => `<p${i === sceneBeat && sceneBeat ? ' class="beat-new"' : ''}>${interpolate(p)}</p>`).join('')}</div>${
+      last
+        ? `${node.widget ? widget(node.widget) : ''}${node.lesson ? `<div class="lesson"><small>PACK THIS FOR REAL LIFE</small>${node.lesson}</div>` : ''}${node.ending ? `<div class="complete-metrics"><span>${locations.length} places explored</span><span>${state.inventory.length} discoveries earned</span><span>◉ ${state.coins} coins</span></div>` : ''}${
+            game
+              ? `<button class="minigame-launch ${node.minigameLabel ? 'feature' : ''}" data-game="${node.minigame}"><span class="mg-icon">${game.icon}</span><span><strong>${node.minigameLabel || 'Bonus game: ' + game.title}</strong><small>${node.minigameBlurb || game.blurb}${best ? ` · Best ◉ ${best.coins}` : ' · Earn coins for your pouch'}</small></span><span>▶</span></button>`
+              : ''
+          }<div class="choices">${visibleChoices(node).map((c, i) => `<button class="choice" data-choice="${i}"><span>${i + 1}</span><div><strong>${interpolate(c.label)}</strong>${c.detail ? `<small>${interpolate(c.detail)}</small>` : ''}</div><span>→</span></button>`).join('')}</div>`
+        : `<button class="beat-more" id="beat-more"><span>Go on…</span><span class="beat-count">${sceneBeat + 1} of ${beats}</span><span class="beat-caret">▸</span></button>`
+    }</div>`
+  if (!last) $('#story-body').scrollTop = $('#story-body').scrollHeight
+  else if (!sceneBeat) $('#story-body').scrollTop = 0
   $('#back-scene').disabled = !state.history.length
   $('#scene-count').textContent = `${state.done.length}/${locations.length} places · ◉ ${state.coins}`
   $('#scene-source').hidden = !node.source
+  if ($('#beat-more')) $('#beat-more').onclick = nextBeat
   document.querySelectorAll('[data-choice]').forEach((b) => (b.onclick = () => act(Number(b.dataset.choice))))
   document.querySelectorAll('[data-game]').forEach((b) => (b.onclick = () => launchArcade(b.dataset.game, 'story')))
   const range = $('#reserve-range')
@@ -987,7 +1019,14 @@ function renderNode(id) {
     range.oninput = () => {
       $('#reserve-output').textContent = `${money(+range.value)} reserved · ${money(4000 - range.value)} for furniture`
     }
-  openDialog(story)
+}
+function nextBeat() {
+  const node = episode.nodes[state.node]
+  if (!node || sceneBeat >= node.text.length - 1) return false
+  sceneBeat++
+  music.effect('page')
+  paintScene()
+  return true
 }
 async function act(i) {
   const node = episode.nodes[state.node],
@@ -1067,9 +1106,16 @@ $('#back-scene').onclick = () => {
   renderNode(state.node)
 }
 $('#close-story').onclick = closeStory
-story.addEventListener('cancel', (e) => {
-  e.preventDefault()
-  closeStory()
+document.addEventListener('keydown', (e) => {
+  if (story.hidden || anyDialogOpen() || activeArcade) return
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    return closeStory()
+  }
+  // Space or Enter walks the scene forward, the way a game text box does.
+  if ((e.key === ' ' || e.key === 'Enter') && !['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(document.activeElement?.tagName)) {
+    if (nextBeat()) e.preventDefault()
+  }
 })
 $('#narrate').onclick = () => {
   if (reading) return stopNarration()
@@ -1108,7 +1154,7 @@ async function launchArcade(id, from) {
     return
   }
   stopNarration()
-  const inStory = from === 'story' && story.open
+  const inStory = from === 'story' && !story.hidden
   const host = inStory ? $('#story-body') : $('#utility-body')
   if (!inStory) {
     $('#utility-label').textContent = 'HEARTHVALE ARCADE'
@@ -1595,7 +1641,7 @@ if (saved?.started && state.profile.complete) {
 }
 welcome.addEventListener('cancel', (e) => e.preventDefault())
 document.addEventListener('keydown', (e) => {
-  if (story.open && !utility.open && !$('#sound-panel').open && !$('#lead')?.open && !activeArcade && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && ['1', '2', '3'].includes(e.key)) {
+  if (!story.hidden && !utility.open && !$('#sound-panel').open && !$('#lead')?.open && !activeArcade && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && ['1', '2', '3'].includes(e.key)) {
     e.preventDefault()
     act(+e.key - 1)
   }
@@ -1630,7 +1676,7 @@ $('#next-destination').onclick = goNext
 function howToPlay() {
   utilityView(
     'YOUR FIRST QUEST',
-    `<h2>From rent day to your first key.</h2><p>Your long-term adventure is buying a home. This opening quest is a short practice run that unlocks your personal buying plan.</p><ol class="how-steps"><li><b>Survive rent day.</b> Bartleby Quill wants his money. Keep what you can.</li><li><b>Collect three tools.</b> Visit the provisioner, the guild, and the mapmaker’s tower.</li><li><b>Face your first house decision.</b> Visit Three-Door Lane and work through a repair surprise.</li><li><b>Meet the lender at the gate.</b> ${esc(presenter.firstName)} and ${esc(assistant.firstName)} are the two real people in town. Reach the bridge to earn your First Key.</li></ol><div class="lesson"><small>HOW TO MOVE</small>Walk with <kbd>W A S D</kbd> or the arrows. Click the map to walk there, or <b>hold the mouse down and lead your character around</b> like a leash. Press <kbd>E</kbd> or tap ● near a glowing place to enter it. Walk over coins to collect them. Something off the marked paths is humming.</div><div class="lesson"><small>COINS</small>Path coins and the four arcade games fill your pouch. At the gate, every coin becomes $100 of fictional down payment and you see what it does to a monthly payment.</div><p>There is no timer and no perfect score. Thoughtful choices, including deciding to prepare longer, move the story forward.</p><div class="utility-actions"><button class="primary" id="help-next">${state.ended ? 'Open my buying plan' : 'Take me to my next stop'} →</button><button class="secondary" id="replay-intro">Watch the animated opening</button></div>`,
+    `<h2>From rent day to your first key.</h2><p>Your long-term adventure is buying a home. This opening quest is a short practice run that unlocks your personal buying plan.</p><ol class="how-steps"><li><b>Survive rent day.</b> Bartleby Quill wants his money. Keep what you can.</li><li><b>Collect three tools.</b> Visit the provisioner, the guild, and the mapmaker’s tower.</li><li><b>Face your first house decision.</b> Visit Three-Door Lane and work through a repair surprise.</li><li><b>Meet the lender at the gate.</b> ${esc(presenter.firstName)} and ${esc(assistant.firstName)} are the two real people in town. Reach the bridge to earn your First Key.</li></ol><div class="lesson"><small>HOW TO MOVE</small>Walk with <kbd>W A S D</kbd> or the arrows. Click the map to walk there, or <b>hold the mouse down and lead your character around</b> like a leash. Press <kbd>E</kbd> or tap ● near a glowing place to enter it. Walk over coins to collect them. Something off the marked paths is humming.</div><div class="lesson"><small>COINS</small>Path coins and the four arcade games fill your pouch. At the gate, every coin becomes $100 of fictional down payment and you see what it does to a monthly payment.</div><p>There is no timer and no perfect score. Thoughtful choices, including deciding to prepare longer, move the story forward.</p><div class="utility-actions"><button class="primary" id="help-next">${state.ended ? 'Open my buying plan' : 'Take me to my next stop'} →</button><button class="secondary" id="replay-intro">Watch the opening again</button></div>`,
   )
   $('#help-next').onclick = () => {
     utility.close()
@@ -1769,66 +1815,90 @@ function renderSetup() {
       if (state.planStarted && state.ended) showPlan()
       return
     }
-    // Straight into the story. The animated opening is available from How to play.
-    state.started = true
-    save()
-    update()
-    track('prologue_skipped_by_default')
-    renderNode(saved ? state.node : 'wake')
+    // The opening plays first. You are asleep, and then Bartleby lets himself in.
+    if (saved) {
+      state.started = true
+      save()
+      update()
+      renderNode(state.node)
+    } else {
+      showPrologue()
+    }
   }
 }
 $('#setup').addEventListener('cancel', (e) => {
   if (!editingProfile) e.preventDefault()
 })
 $('#profile-button').onclick = () => showSetup(true)
+/* ---------- the opening: you are asleep, and then you are not ----------
+   This is the original opening from homebuyersmindset.com, rebuilt here: the apartment at six in
+   the morning, the noise through the walls, the landlord letting himself in, and a receipt that
+   shows the month in hours worked rather than in dollars. It plays before anything else. */
 let prologueTimer = null,
   prologueIndex = 0,
-  prologuePaused = false,
   prologueReplay = false
 const openingFrames = [
-  { position: '22% 72%', eyebrow: 'HEARTHVALE · ANOTHER RENT DAY', title: 'Work. Rent. Repeat.', text: 'You work hard. Every month, another payment buys another month in a place that belongs to someone else. Tonight, you start wondering what a place of your own could look like.' },
-  { position: '92% 15%', eyebrow: 'A DIFFERENT CHAPTER', title: 'A door with your name on it.', text: 'A garden. More space. Walls you can finally paint. Buying brings responsibilities, too. You don’t need all the answers tonight—just a way to find your first ones.' },
-  { position: '48% 43%', eyebrow: 'YOUR MISSION', title: 'Three tools. One first key.', text: 'Meet Mira, Sage, and Ellis. Collect the Budget Compass, the Clear-Sight Lens, and the Homeward Map. Then face your first house decision and meet Rowan at the lantern bridge.' },
-  { position: '75% 62%', eyebrow: 'HOW TO WIN THIS FIRST QUEST', title: 'Walk, collect, and reach the gate.', text: `Walk with the arrows or tap the map. Pick up coins on the paths and play the arcade games. The flag on the castle belongs to ${presenter.name}, the one real person in Hearthvale. Reach the bridge to unlock a buying plan built around your goals.` },
+  {
+    scene: 'sleeping',
+    eyebrow: 'SIX IN THE MORNING',
+    title: 'Just five more minutes.',
+    text: 'A neighbour’s boots. A door slamming somewhere below. Someone, somewhere, practising the trumpet. All you want is a little peace and about four more hours.',
+  },
+  {
+    scene: 'collector',
+    eyebrow: 'BARTLEBY QUILL · YOUR LANDLORD',
+    title: '“Congratulations! Another month paid.”',
+    text: '“You worked a hundred hours for this. I own the building. The good news,” he beams, pocketing your month and licking a fingertip to write the receipt, “is that you get to do it all again next month!”',
+    receipt: true,
+  },
+  {
+    scene: 'gone',
+    eyebrow: 'THE JAR IS LIGHTER',
+    title: 'What if next month started something?',
+    text: 'Rent bought you a place to live. It did not buy you a door of your own, or walls you are allowed to paint. Through the window, the roofs of Hearthvale are going gold.',
+  },
 ]
 function showPrologue(replay = false) {
   stopNarration()
   prologueReplay = replay
   prologueIndex = 0
-  prologuePaused = false
   renderPrologue()
   openDialog($('#prologue'))
 }
 function renderPrologue() {
   clearTimeout(prologueTimer)
   const f = openingFrames[prologueIndex]
-  $('#prologue-body').innerHTML = `<div class="cinema-scene" style="--scene-position:${f.position}"><div class="cinema-art ${prologuePaused ? 'paused' : ''}"></div><div class="cinema-shade"></div><div class="cinema-controls"><span class="eyebrow">THE FIRST KEY · OPENING</span><div><button data-prologue-sound>${music.on ? '♫ Mute' : '♫ Sound on'}</button><button id="intro-volume">Volume</button><button id="skip-opening">Skip opening →</button></div></div><div class="cinema-caption"><span class="eyebrow">${f.eyebrow}</span><h2>${f.title}</h2><p>${esc(state.profile.name)}, ${f.text.charAt(0).toLowerCase() + f.text.slice(1)}</p><div class="cinema-progress">${openingFrames.map((_, i) => `<button data-frame="${i}" class="${i <= prologueIndex ? 'viewed' : ''}" aria-label="Opening scene ${i + 1}"></button>`).join('')}</div><div class="cinema-bottom"><button id="pause-opening" class="secondary">${prologuePaused ? '▶ Play' : 'Ⅱ Pause'}</button><span>${prologueIndex + 1} / ${openingFrames.length} · Animated opening</span><button id="next-opening" class="primary">${prologueIndex === 3 ? (prologueReplay ? 'Back to my adventure →' : 'I’m ready. Let’s go →') : 'Next →'}</button></div></div></div>`
+  const last = prologueIndex === openingFrames.length - 1
+  $('#prologue-body').innerHTML = `<div class="opening" data-scene="${f.scene}">
+      <div class="opening-scene">
+        <span class="sleep-z">z z Z</span>
+        <span class="noise-note">THUMP · TOOT · SLAM</span>
+        <span class="collector"><span class="collector-hat"></span><span class="collector-coat"></span><span class="collector-ledger"></span></span>
+        <span class="rent-coin">−$1,800 · rent paid</span>
+        <span class="opening-shade"></span>
+      </div>
+      <div class="opening-caption">
+        <div class="opening-controls"><button data-prologue-sound>${music.on ? '♫ Mute' : '♫ Sound on'}</button><button id="skip-opening">Skip →</button></div>
+        <span class="eyebrow">${esc(f.eyebrow)}</span>
+        <h2>${esc(f.title)}</h2>
+        <p>${esc(f.text)}</p>
+        ${f.receipt ? '<div class="rent-receipt"><strong>RECEIPT · ONE MONTH OF RENT</strong><span>$18 take-home an hour × 100 hours = $1,800</span><small>A fictional illustration of what a month of rent costs in hours of your life.</small></div>' : ''}
+        <div class="opening-bottom">
+          <span class="opening-dots">${openingFrames.map((_, i) => `<i class="${i <= prologueIndex ? 'on' : ''}"></i>`).join('')}</span>
+          <button class="primary" id="next-opening">${last ? 'Get up →' : 'Next ▸'}</button>
+        </div>
+      </div>
+    </div>`
   $('[data-prologue-sound]').onclick = toggleMusic
-  $('#intro-volume').onclick = soundPanel
   $('#skip-opening').onclick = finishPrologue
   $('#next-opening').onclick = () => {
-    if (prologueIndex === 3) finishPrologue()
+    if (last) finishPrologue()
     else {
       prologueIndex++
       renderPrologue()
     }
   }
-  $('#pause-opening').onclick = () => {
-    prologuePaused = !prologuePaused
-    renderPrologue()
-  }
-  document.querySelectorAll('[data-frame]').forEach(
-    (b) =>
-      (b.onclick = () => {
-        prologueIndex = +b.dataset.frame
-        renderPrologue()
-      }),
-  )
-  if (!prologuePaused && prologueIndex < 3)
-    prologueTimer = setTimeout(() => {
-      prologueIndex++
-      renderPrologue()
-    }, 12000)
+  if (f.scene === 'collector') music.effect('reward')
 }
 function finishPrologue() {
   clearTimeout(prologueTimer)
